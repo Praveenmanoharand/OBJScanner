@@ -3,283 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA MAGIC SEPARATOR | Pro AI Design Tool</title>
+    <title>AURA MAGIC | Layer Separator</title>
     
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
-    
-    <!-- Scripts & Frameworks -->
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        'display': ['Space Grotesk', 'sans-serif'],
+                        'body': ['Inter', 'sans-serif'],
+                    },
                     colors: {
                         cyber: {
-                            black: '#0A0A0B',
-                            slate: '#161618',
+                            black: '#020617',
+                            deep: '#0F172A',
                             violet: '#8B5CF6',
-                            neon: '#C4B5FD',
-                            accent: '#F472B6'
+                            neon: '#10B981',
+                            pink: '#D946EF',
                         }
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        display: ['Space Grotesk', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
 
-    <style type="text/tailwindcss">
-        @layer base {
-            body { @apply bg-cyber-black text-white antialiased selection:bg-cyber-violet/30; }
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --bg: #020617;
         }
-        .glass-panel { @apply bg-white/[0.03] backdrop-blur-3xl border border-white/10; }
-        .cyber-glow { box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.3); }
-        .magic-text { @apply bg-clip-text text-transparent bg-gradient-to-r from-cyber-violet to-cyber-accent; }
+
+        body { 
+            background: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #8B5CF6, #D946EF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cyber-border {
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+        }
+
+        .magic-btn {
+            background: linear-gradient(90deg, #8B5CF6, #D946EF);
+            transition: all 0.3s ease;
+        }
+
+        .magic-btn:hover {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+            transform: scale(1.02);
+        }
+
+        .canvas-workspace {
+            background: #000;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hide Scrollbar */
+        ::-webkit-scrollbar { width: 0px; }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full; }
-        
-        .loading-ring { border: 2px solid transparent; border-top-color: #8B5CF6; border-right-color: #F472B6; }
+        .loading-glow {
+            animation: glow-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { filter: drop-shadow(0 0 5px #8B5CF6); }
+            50% { filter: drop-shadow(0 0 20px #D946EF); }
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app" class="min-h-screen relative overflow-hidden">
+        <!-- Floating Nav -->
+        <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+            <div class="glass-panel px-8 py-4 rounded-full flex items-center justify-between cyber-border">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-cyber-violet to-cyber-pink rounded-xl flex items-center justify-center loading-glow">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-width="2"/></svg>
+                    </div>
+                    <span class="font-display font-bold text-xl tracking-tighter">AURA<span class="text-cyber-violet">MAGIC</span></span>
+                </div>
+                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+                    <button onclick="navigateTo('home')" class="hover:text-white transition-colors">Vision</button>
+                    <button onclick="navigateTo('magic')" class="hover:text-white transition-colors">Magic Grab</button>
+                    <button onclick="navigateTo('dashboard')" class="hover:text-white transition-colors">History</button>
+                </div>
+                <button onclick="navigateTo('magic')" class="px-6 py-2 rounded-full border border-cyber-violet/50 text-cyber-violet font-bold text-sm hover:bg-cyber-violet hover:text-white transition-all">
+                    Launch Magic
+                </button>
+            </div>
+        </nav>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { motion, AnimatePresence } = FramerMotion;
+        <!-- Home Section -->
+        <section id="page-home" class="page-section pt-32 pb-20 px-6 min-h-screen flex flex-col items-center justify-center">
+            <div class="max-w-4xl text-center">
+                <div class="inline-block px-4 py-1 rounded-full border border-cyber-violet/30 bg-cyber-violet/10 text-cyber-violet text-xs font-bold tracking-widest uppercase mb-6">
+                    Next-Gen Layer Separation
+                </div>
+                <h1 class="font-display text-6xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
+                    DECONSTRUCT <span class="gradient-text">REALITY.</span>
+                </h1>
+                <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
+                    Point, Upload, and Separate. Turn any flat image into editable, draggable 3D-like layers with Meta SAM and AI Magic.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="navigateTo('magic')" class="magic-btn px-10 py-5 rounded-full font-black text-lg shadow-xl shadow-cyber-violet/20">
+                        Start Extracting
+                    </button>
+                    <button onclick="navigateTo('dashboard')" class="px-10 py-5 rounded-full glass-panel border border-white/10 font-bold hover:bg-white/5 transition-all">
+                        View Workspace
+                    </button>
+                </div>
+            </div>
+        </section>
 
+        <!-- Magic Workspace Section -->
+        <section id="page-magic" class="page-section hidden pt-32 pb-20 px-6 min-h-screen">
+            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Toolbar -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-panel p-6 rounded-3xl cyber-border">
+                        <h3 class="font-display font-bold text-xl mb-4">Magic Tools</h3>
+                        <div class="space-y-3">
+                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
+                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/></svg>
+                                <span class="font-bold text-sm">Smart Grab</span>
+                            </button>
+                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
+                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
+                                <span class="font-bold text-sm">Text Extract</span>
+                            </button>
+                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
+                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
+                                <span class="font-bold text-sm">Inpaint Background</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="upload-zone" class="glass-panel p-8 rounded-3xl border-2 border-dashed border-white/10 hover:border-cyber-violet/50 transition-all group cursor-pointer text-center">
+                        <input type="file" id="image-upload" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
+                        <div onclick="document.getElementById('image-upload').click()">
+                            <svg class="w-12 h-12 text-slate-500 group-hover:text-cyber-violet mx-auto mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
+                            <p class="font-bold text-sm text-slate-400 group-hover:text-white">Upload Flat Image</p>
+                            <p class="text-[10px] text-slate-600 mt-2">RAW, PNG, JPG supported</p>
+                        </div>
+                    </div>
+                    
+                    <button id="magic-btn" onclick="startMagicExtraction()" class="hidden w-full magic-btn py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3">
+                        <span>MAGIC GRAB</span>
+                        <svg class="w-6 h-6 animate-spin hidden" id="magic-spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Main Canvas -->
+                <div class="lg:col-span-3">
+                    <div class="canvas-workspace relative aspect-video flex items-center justify-center overflow-hidden">
+                        <canvas id="magic-canvas"></canvas>
+                        <div id="canvas-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50">
+                            <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                                <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="1.5"/></svg>
+                            </div>
+                            <h2 class="font-display font-bold text-2xl text-slate-400">Awaiting Cyber-Magic...</h2>
+                            <p class="text-slate-600 mt-2">Upload an image to start deconstructing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex items-center justify-between px-4">
+                        <div class="flex items-center gap-4">
+                            <button onclick="zoomCanvas(1.1)" class="p-3 rounded-xl glass-panel border border-white/10 hover:border-cyber-violet transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
+                            </button>
+                            <button onclick="zoomCanvas(0.9)" class="p-3 rounded-xl glass-panel border border-white/10 hover:border-cyber-violet transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-width="2"/></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="downloadResult()" class="px-8 py-3 rounded-xl border border-cyber-neon text-cyber-neon font-bold text-sm hover:bg-cyber-neon hover:text-black transition-all">
+                                Export Project
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="page-dashboard" class="page-section hidden pt-32 pb-20 px-6 min-h-screen">
+            <div class="max-w-5xl mx-auto">
+                <h2 class="font-display text-4xl font-bold mb-10">Extraction <span class="text-cyber-violet">History</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="history-list">
+                    <!-- History items will appear here -->
+                    <div class="glass-panel p-8 rounded-4xl cyber-border flex items-center justify-center h-48 border-dashed">
+                        <p class="text-slate-500 font-medium italic">No magic sessions found.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // =====================
+        // State Management
+        // =====================
+        let currentPage = 'home';
+        let canvas = null;
+        let originalImage = null;
+        let layersData = null;
+        
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:8000' 
             : window.location.origin;
 
-        const App = () => {
-            const [status, setStatus] = useState('idle'); // idle, uploading, processing, done
-            const [layers, setLayers] = useState([]);
-            const [originalUrl, setOriginalUrl] = useState(null);
-            const canvasRef = useRef(null);
-            const fabricCanvas = useRef(null);
+        // Initialize App
+        window.addEventListener('load', () => {
+            initCanvas();
+            navigateTo('home');
+        });
 
-            // Initialize Canvas
-            useEffect(() => {
-                if (status === 'done' && canvasRef.current) {
-                    fabricCanvas.current = new fabric.Canvas(canvasRef.current, {
-                        width: window.innerWidth * 0.8,
-                        height: window.innerHeight * 0.6,
-                        backgroundColor: 'transparent'
-                    });
-                    
-                    // Add Layers once images are loaded
-                    setupMagicCanvas();
-                }
-                return () => fabricCanvas.current?.dispose();
-            }, [status, layers]);
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            currentPage = pageId;
+            
+            // Re-render canvas if entering magic page
+            if (pageId === 'magic' && canvas) {
+                resizeCanvas();
+            }
+        }
 
-            const setupMagicCanvas = async () => {
-                if (!originalUrl || !layers.length) return;
+        // =====================
+        // Canvas Engine (Fabric.js)
+        // =====================
+        function initCanvas() {
+            const canvasEl = document.getElementById('magic-canvas');
+            canvas = new fabric.Canvas('magic-canvas', {
+                width: 800,
+                height: 500,
+                backgroundColor: 'transparent',
+                preserveObjectStacking: true
+            });
+            
+            fabric.Object.prototype.transparentCorners = false;
+            fabric.Object.prototype.cornerColor = '#8B5CF6';
+            fabric.Object.prototype.cornerStyle = 'circle';
+            fabric.Object.prototype.cornerStrokeColor = '#FFFFFF';
+            fabric.Object.prototype.cornerSize = 10;
+        }
+
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-workspace');
+            if (container && canvas) {
+                canvas.setWidth(container.clientWidth);
+                canvas.setHeight(container.clientHeight);
+                canvas.renderAll();
+            }
+        }
+
+        // =====================
+        // Image Processing
+        // =====================
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = e.target.result;
+                document.getElementById('canvas-placeholder').classList.add('hidden');
+                document.getElementById('magic-btn').classList.remove('hidden');
                 
-                // 1. Add Background (Mock Inpainting: Original at low opacity or blurred)
-                fabric.Image.fromURL(`${API_BASE_URL}${originalUrl}`, (img) => {
-                    img.set({ selectable: false, opacity: 0.3, filters: [new fabric.Image.filters.Blur({blur: 0.5})] });
-                    img.scaleToWidth(fabricCanvas.current.width);
-                    fabricCanvas.current.add(img);
-                    fabricCanvas.current.sendToBack(img);
-                }, { crossOrigin: 'anonymous' });
-
-                // 2. Add Separated Objects (Clipped from original)
-                for (let layer of layers) {
-                    fabric.Image.fromURL(`${API_BASE_URL}${originalUrl}`, (img) => {
-                        const [ymin, xmin, ymax, xmax] = layer.bbox;
-                        const w = (xmax - xmin) * (img.width / 1000);
-                        const h = (ymax - ymin) * (img.height / 1000);
-                        const left = xmin * (img.width / 1000);
-                        const top = ymin * (img.height / 1000);
-
-                        // Create individual layer by cropping
-                        img.set({
-                            left: 100 + Math.random() * 100, // Random spread for 'Separation' feel
-                            top: 100 + Math.random() * 100,
-                            clipPath: new fabric.Rect({
-                                left: left, top: top, width: w, height: h,
-                                absolutePositioned: true
-                            })
-                        });
-
-                        img.scale(0.5); // Scale down for better view
-                        fabricCanvas.current.add(img);
-                    }, { crossOrigin: 'anonymous' });
-                }
+                // Clear and show preview on canvas
+                canvas.clear();
+                fabric.Image.fromURL(originalImage, (img) => {
+                    const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.8;
+                    img.scale(scale);
+                    img.center();
+                    img.selectable = false;
+                    canvas.add(img);
+                });
             };
+            reader.readAsDataURL(file);
+        }
 
-            const handleFileUpload = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+        async function startMagicExtraction() {
+            if (!originalImage) return;
 
-                setStatus('processing');
-                const formData = new FormData();
-                formData.append('file', file);
+            const btn = document.getElementById('magic-btn');
+            const spinner = document.getElementById('magic-spinner');
+            
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btn.querySelector('span').textContent = "EXTRACTING...";
 
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/magic/extract`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        setOriginalUrl(data.original_url);
-                        setLayers(data.layers);
-                        setTimeout(() => setStatus('done'), 2000); // Allow animation to finish
-                    }
-                } catch (err) {
-                    console.error(err);
-                    setStatus('idle');
-                }
-            };
+            const fileInput = document.getElementById('image-upload');
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
 
-            return (
-                <div className="min-h-screen relative overflow-hidden flex flex-col">
-                    {/* Abstract Background Glows */}
-                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyber-violet/10 rounded-full blur-[120px] pointer-events-none"></div>
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyber-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/magic/extract`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-                    {/* Nav */}
-                    <header className="fixed top-0 left-0 right-0 z-50 p-8 flex justify-between items-center backdrop-blur-md">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyber-violet to-cyber-accent flex items-center justify-center shadow-lg">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" strokeWidth="2"/></svg>
-                            </div>
-                            <span className="font-display font-bold text-xl tracking-tighter">AURA <span className="text-cyber-violet">MAGIC SEPARATOR</span></span>
-                        </div>
-                        <div className="flex gap-6 text-xs font-bold uppercase tracking-widest text-white/50">
-                            <a href="#" className="hover:text-white transition-colors">Workspace</a>
-                            <a href="#" className="hover:text-white transition-colors">Documentation</a>
-                        </div>
-                    </header>
+                if (!response.ok) throw new Error("Magic extraction failed.");
 
-                    {/* Main Content */}
-                    <main className="flex-1 flex flex-col items-center justify-center p-8 mt-20">
-                        <AnimatePresence mode="wait">
-                            {status === 'idle' && (
-                                <motion.div 
-                                    key="upload"
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 1.1 }}
-                                    className="max-w-2xl w-full"
-                                >
-                                    <div className="glass-panel p-12 rounded-[3rem] text-center space-y-8 cyber-glow border-white/20">
-                                        <div className="space-y-4">
-                                            <h2 className="text-5xl font-display font-bold magic-text">Level Up Your Assets.</h2>
-                                            <p className="text-white/60 text-lg">Upload any flat image. Our AI will automatically segregate it into distinct, draggable layers with a single click.</p>
-                                        </div>
-                                        
-                                        <label className="block w-full cursor-pointer group">
-                                            <div className="border-2 border-dashed border-white/20 rounded-[2rem] p-16 group-hover:border-cyber-violet group-hover:bg-cyber-violet/5 transition-all duration-500">
-                                                <div className="w-20 h-20 bg-white/5 rounded-full mx-auto mb-6 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                    <svg className="w-8 h-8 text-white/40 group-hover:text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" strokeWidth="2"/></svg>
-                                                </div>
-                                                <p className="text-white/40 font-bold uppercase tracking-[0.2em] text-sm">Drop image here or click to browse</p>
-                                            </div>
-                                            <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
-                                        </label>
-                                    </div>
-                                </motion.div>
-                            )}
+                const result = await response.json();
+                renderMagicLayers(result.layers);
+            } catch (err) {
+                console.error("Magic Error:", err);
+                alert("Magic failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btn.querySelector('span').textContent = "MAGIC GRAB";
+            }
+        }
 
-                            {status === 'processing' && (
-                                <motion.div 
-                                    key="processing"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="text-center space-y-12"
-                                >
-                                    <div className="relative w-48 h-48 mx-auto">
-                                        <motion.div 
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                                            className="absolute inset-0 rounded-full loading-ring"
-                                        ></motion.div>
-                                        <div className="absolute inset-4 rounded-full bg-cyber-violet/10 flex items-center justify-center">
-                                            <svg className="w-12 h-12 text-cyber-violet animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.183.12l-.747.311a2 2 0 00-1.115 1.745v1.206a2 2 0 00.586 1.414l1.586 1.586a2 2 0 001.414.586h11.414a2 2 0 001.414-.586l1.586-1.586a2 2 0 00.586-1.414v-1.206a2 2 0 00-1.115-1.745l-.747-.311z" strokeWidth="1.5"/></svg>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <h3 className="text-3xl font-display font-bold magic-text italic tracking-tighter">Deconstructing Layers...</h3>
-                                        <div className="flex gap-2 justify-center">
-                                            {[0,1,2].map(i => (
-                                                <motion.div 
-                                                    key={i}
-                                                    animate={{ opacity: [0.3, 1, 0.3], y: [0, -5, 0] }}
-                                                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                                                    className="w-1.5 h-1.5 rounded-full bg-cyber-violet"
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
+        function renderMagicLayers(data) {
+            canvas.clear();
+            
+            // 1. Render Background (Locked)
+            fabric.Image.fromURL(originalImage, (img) => {
+                img.set({
+                    left: canvas.width / 2,
+                    top: canvas.height / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    opacity: 0.5, // Background dimmed
+                    selectable: false,
+                    evented: false
+                });
+                const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.8;
+                img.scale(scale);
+                canvas.add(img);
+                canvas.sendToBack(img);
+            });
 
-                            {status === 'done' && (
-                                <motion.div 
-                                    key="canvas"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="w-full h-full flex flex-col items-center"
-                                >
-                                    <div className="w-[90%] flex justify-between items-center mb-6">
-                                        <div className="space-y-1">
-                                            <h3 className="text-2xl font-display font-bold text-white tracking-tighter">Workspace <span className="text-cyber-violet">#001</span></h3>
-                                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">AI Separated Objects: {layers.length}</p>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <button onClick={() => setStatus('idle')} className="px-6 py-2 rounded-xl glass-panel text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">New Project</button>
-                                            <button className="px-6 py-2 rounded-xl bg-cyber-violet text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-cyber-violet/20 hover:scale-105 transition-transform">Export PSD</button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="relative glass-panel rounded-[2rem] overflow-hidden cyber-glow border-white/20">
-                                        <canvas ref={canvasRef}></canvas>
-                                        
-                                        {/* Canvas Toolbar Overlay */}
-                                        <div className="absolute right-6 top-6 flex flex-col gap-3">
-                                            {[1,2,3,4].map(i => (
-                                                <div key={i} className="w-10 h-10 rounded-xl glass-panel flex items-center justify-center text-white/40 hover:text-white cursor-pointer transition-colors">
-                                                    <div className="w-4 h-4 border border-current rounded-sm"></div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <p className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.4em]">Interactive Mode • Drag to Arrange</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </main>
+            // 2. Render Objects as separate interactive layers
+            data.objects.forEach(obj => {
+                // In a real app, this would be a cropped transparent PNG
+                // For demo, we use the original image with a clip mask or just a label card
+                const rect = new fabric.Rect({
+                    left: (obj.bbox[1] / 100) * canvas.width,
+                    top: (obj.bbox[0] / 100) * canvas.height,
+                    width: (obj.bbox[2] / 100) * canvas.width,
+                    height: (obj.bbox[3] / 100) * canvas.height,
+                    fill: 'rgba(139, 92, 246, 0.2)',
+                    stroke: '#8B5CF6',
+                    strokeWidth: 2,
+                    rx: 10, ry: 10
+                });
+                
+                const text = new fabric.Text(obj.label, {
+                    fontSize: 14,
+                    fill: '#FFF',
+                    left: rect.left + 5,
+                    top: rect.top + 5,
+                    fontFamily: 'Inter'
+                });
+                
+                const group = new fabric.Group([rect, text], {
+                    hasRotatingPoint: true,
+                    cornerStyle: 'circle'
+                });
+                canvas.add(group);
+            });
 
-                    {/* Footer */}
-                    <footer className="p-8 text-center text-white/20 text-[10px] font-black uppercase tracking-[0.5em]">
-                        Cyber-Corporate Intelligence System v4.0.2
-                    </footer>
-                </div>
-            );
-        };
+            // 3. Render Text layers
+            data.text_layers.forEach(txt => {
+                const textObj = new fabric.IText(txt.text, {
+                    left: (txt.bbox[1] / 100) * canvas.width,
+                    top: (txt.bbox[0] / 100) * canvas.height,
+                    fontSize: txt.fontSize || 24,
+                    fill: '#D946EF',
+                    fontFamily: 'Space Grotesk',
+                    fontWeight: 'bold'
+                });
+                canvas.add(textObj);
+            });
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+            canvas.renderAll();
+        }
+
+        function zoomCanvas(factor) {
+            canvas.setZoom(canvas.getZoom() * factor);
+        }
+
+        function downloadResult() {
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                quality: 1
+            });
+            const link = document.createElement('a');
+            link.download = 'magic-grab-result.png';
+            link.href = dataURL;
+            link.click();
+        }
     </script>
 </body>
 </html>

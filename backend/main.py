@@ -1,22 +1,20 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import os
 import uuid
 import base64
 import json
-from groq import Groq
-from dotenv import load_dotenv
 import uvicorn
-from PIL import Image
-import io
+from dotenv import load_dotenv
+from groq import Groq
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI(title="Magic Layer Separator API")
 
-# CORS for React Frontend
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,105 +23,91 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Setup Storage
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-
-# Initialize Groq
+# Initialize AI Client
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 groq_client = None
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
 
+# Directory for storing processed layers (In a real app, use S3/Cloudinary)
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 @app.get("/")
 async def root():
-    return {"status": "online", "message": "Cyber-Corporate Magic Separator API is ready."}
+    return {"status": "online", "message": "Magic Layer Separator API is active."}
 
 @app.post("/api/magic/extract")
 async def extract_layers(file: UploadFile = File(...)):
+    """
+    Simulated AI Pipeline: 
+    1. SAM (Segment Anything) for Object Extraction
+    2. Tesseract for OCR Text Extraction
+    3. LaMa for Background Inpainting
+    """
     if not groq_client:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY missing.")
-
+    
     try:
-        # 1. Process Upload
-        file_id = str(uuid.uuid4())
+        # 1. Read Uploaded Image
         contents = await file.read()
-        
-        # Open image to get dimensions
-        img = Image.open(io.BytesIO(contents))
-        width, height = img.size
-        
-        # Save original
-        original_filename = f"{file_id}_original.png"
-        original_path = os.path.join(UPLOAD_DIR, original_filename)
-        img.save(original_path)
-
-        # 2. AI Analysis (Simulating SAM + OCR with Llama 3.2 Vision)
-        # We ask Llama to identify objects and text with coordinates [0-1000 scale]
         image_base64 = base64.b64encode(contents).decode('utf-8')
         
-        prompt = f"""
-        You are an AI Image Segmenter. Deconstruct this image into layers.
-        Identify:
-        1. Foreground Objects (People, items, etc.)
-        2. Text Blocks (Headlines, body text)
-        3. Background context.
-
-        For each element, provide:
-        - type: 'object' or 'text'
-        - content: (the text string if it's text)
-        - bbox: [ymin, xmin, ymax, xmax] in 0-1000 scale.
-        - description: (briefly what it is)
-
-        Dimensions: {width}x{height}
-
-        Return the result in this EXACT JSON:
-        {{
-            "layers": [
-                {{ "type": "object", "bbox": [0,0,0,0], "description": "..." }},
-                {{ "type": "text", "bbox": [0,0,0,0], "content": "...", "fontSize": 24 }}
+        # 2. Call Vision AI to identify layers and coordinates
+        # In a production environment, you would run SAM and OCR here.
+        # For this demo, we use Llama 3.2 Vision to 'deconstruct' the layout.
+        prompt = """
+        Analyze this image for layer separation. 
+        1. Identify main foreground objects and their bounding boxes [top, left, width, height] in percentages.
+        2. Identify all text blocks and their bounding boxes [top, left, width, height], content, and font size.
+        3. Describe the background style.
+        
+        Return the result in this EXACT JSON format:
+        {
+            "background": {"style": "...", "description": "..."},
+            "objects": [
+                {"id": "obj1", "label": "...", "bbox": [y, x, w, h]}
             ],
-            "background_description": "..."
-        }}
+            "text_layers": [
+                {"id": "txt1", "text": "...", "bbox": [y, x, w, h], "fontSize": 24}
+            ]
+        }
         """
-
+        
         completion = groq_client.chat.completions.create(
             model="llama-3.2-11b-vision-preview",
             messages=[
-                {{
+                {
                     "role": "user",
                     "content": [
-                        {{"type": "text", "text": prompt}},
-                        {{
+                        {"type": "text", "text": prompt},
+                        {
                             "type": "image_url",
-                            "image_url": {{"url": f"data:image/jpeg;base64,{image_base64}"}},
-                        }},
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}",
+                            },
+                        },
                     ],
-                }}
+                }
             ],
             temperature=0.1,
-            response_format={{"type": "json_object"}}
+            response_format={"type": "json_object"}
         )
-
+        
         analysis = json.loads(completion.choices[0].message.content)
-
-        # 3. Prepare Response (URLs and Coords)
-        # In a real SAM setup, we would cut the images here. 
-        # For this 'Magic' prototype, we send the original URL and coordinates.
-        # The frontend will use Canvas to 'clip' these areas dynamically.
-
+        
+        # 3. Formulate the response
+        # In a real SAM/LaMa pipeline, you'd return URLs to the actual transparent PNGs.
+        # Here we return the analysis so the frontend can 'simulate' the separation on canvas.
         return {
             "success": True,
-            "original_url": f"/uploads/{original_filename}",
-            "width": width,
-            "height": height,
-            "layers": analysis.get("layers", []),
-            "background_vibe": analysis.get("background_description", "")
+            "session_id": str(uuid.uuid4()),
+            "original_image": f"data:image/jpeg;base64,{image_base64}",
+            "layers": analysis
         }
-
+        
     except Exception as e:
-        print(f"ERROR: {str(e)}")
+        print(f"Error in magic extraction: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
