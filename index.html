@@ -416,8 +416,9 @@
             #page-scan:not(.hidden) { 
                 display: flex; 
                 flex-direction: column; 
-                height: 100vh; 
+                min-height: 100vh; 
                 padding-top: 100px; 
+                overflow-y: auto;
             }
             #nav-header { top: 2rem !important; max-width: 1200px !important; }
             .hero-title { font-size: 5rem !important; }
@@ -865,7 +866,7 @@
             </section>
 
             <!-- Scanner Page -->
-            <section id="page-scan" class="page-section hidden min-h-screen bg-[#F8FAFC] overflow-hidden flex flex-col">
+            <section id="page-scan" class="page-section hidden min-h-screen bg-[#F8FAFC] flex flex-col">
                 <!-- Spatial UI Toolbar (Pill Shaped) -->
                 <div class="z-30 px-6 py-4 flex items-center justify-center">
                     <div class="glass-panel px-8 py-4 rounded-full flex items-center gap-8 border border-white/50 shadow-2xl shadow-slate-200/20 bg-white/40 backdrop-blur-3xl">
@@ -889,7 +890,7 @@
                     <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-aura-orange/5 rounded-full blur-[120px] animate-pulse"></div>
                     
                     <!-- Airy Upload Dropzone -->
-                    <div id="drop-zone" class="z-20 w-full max-w-4xl aspect-[16/9] rounded-[4rem] border border-white/80 flex flex-col items-center justify-center gap-10 glass-panel bg-white/40 backdrop-blur-3xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] hover:shadow-aura-violet/20 hover:border-aura-violet/40 transition-all duration-700 cursor-pointer group" onclick="document.getElementById('file-input').click()">
+                    <div id="drop-zone" class="z-20 w-full max-w-2xl aspect-video rounded-[3rem] border border-white/80 flex flex-col items-center justify-center gap-8 glass-panel bg-white/40 backdrop-blur-3xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] hover:shadow-aura-violet/20 hover:border-aura-violet/40 transition-all duration-700 cursor-pointer group" onclick="document.getElementById('file-input').click()">
                         <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
                         
                         <div class="relative">
