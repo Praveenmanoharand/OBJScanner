@@ -349,8 +349,23 @@
             #page-scan { padding-top: 0 !important; }
             
             /* Scanner: Pure AR Mode (Full Display) */
-            #page-scan:not(.hidden) { position: fixed !important; inset: 0 !important; z-index: 50 !important; background: #000 !important; display: block !important; }
-            #camera-feed { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+            #page-scan:not(.hidden) { 
+                position: fixed !important; 
+                inset: 0 !important; 
+                z-index: 50 !important; 
+                background: #000 !important; 
+                display: block !important;
+                overflow: hidden !important; /* Prevent scroll gaps */
+                height: 100vh !important;
+                width: 100vw !important;
+            }
+            #camera-feed { 
+                position: absolute !important; 
+                inset: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important; 
+                object-fit: cover !important; 
+            }
             
             /* Show Scanner Dock on Mobile and Raise it */
             #scanner-dock { 
@@ -1553,7 +1568,10 @@
                 updateNavigation();
 
                 if (page === 'scan') {
-                    // startCamera already called above
+                    // Start everything automatically
+                    setTimeout(() => {
+                        if (!isDetectionActive) performScan();
+                    }, 1000);
                 }
                 if (page === 'dashboard') renderDashboard();
                 
