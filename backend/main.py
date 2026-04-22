@@ -165,8 +165,10 @@ async def analyze_image(request: ScanRequest):
             summary = "The AI is currently analyzing the scene. Please ensure good lighting."
 
 
-        # 2. Fetch Wikipedia Metadata
-        summary = await get_wikipedia_summary(label)
+        # 2. Fetch Wikipedia Metadata as secondary knowledge
+        wiki_summary = await get_wikipedia_summary(label)
+        if wiki_summary and "could not be retrieved" not in wiki_summary:
+            summary = f"{summary} \n\nKnowledge: {wiki_summary}"
 
         # 3. Database Caching
         scan_id = str(uuid.uuid4())
