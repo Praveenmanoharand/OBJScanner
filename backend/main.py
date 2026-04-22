@@ -98,6 +98,7 @@ async def get_wikipedia_summary(query: str) -> str:
 
 # Endpoints
 @app.get("/")
+@app.get("/api")
 async def root():
     # Serve the main index.html file
     index_file = os.path.join(frontend_path, "index.html")
@@ -105,37 +106,36 @@ async def root():
         return FileResponse(index_file)
     return {
         "status": "online",
-        "message": "OBJ AR Scanner API is active and ready for detection.",
-        "version": "1.0.0"
+        "message": "Aura Life-Hack Lens API is active.",
+        "version": "2.0.0"
     }
 
 @app.post("/api/scan/analyze")
+@app.post("/scan/analyze") # Support both for Vercel routing flexibility
 async def analyze_image(request: ScanRequest):
+    # Check for API client
+    if not groq_client:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY missing in server environment.")
+    
     try:
-        # 1. AI Detection with Gemini
+        # 1. AI Analysis with Gemini (Pivot to Life-Hacks)
         image_data = request.image
         if "base64," in image_data:
             image_data = image_data.split("base64,")[1]
         
-        # Check for API client
-        if not groq_client:
-            raise HTTPException(status_code=500, detail="GROQ_API_KEY missing in server environment.")
-        
         try:
-            print(f"DEBUG: Starting Advanced Vision Analysis...")
-            # Use Groq Llama 3.2 Vision model with a more comprehensive prompt
+            print(f"DEBUG: Starting Life-Hack Analysis...")
             prompt = """
-            Analyze this image with extreme precision and detail. 
-            1. Identify ALL significant objects in the scene, regardless of what they are (electronics, nature, tools, furniture, etc.).
-            2. Describe the EXACT state, context, and any actions occurring (e.g., 'A laptop displaying a code editor', 'A person gesturing', 'A plant with yellowing leaves').
-            3. If any text, brand names, or specific details are visible on the objects, include them in the analysis.
-            4. Provide a 1-3 word highly specific primary label for the most prominent object or action.
-            5. Provide a rich, detailed summary (2-3 sentences) covering everything you see.
+            You are the 'Aura Life-Hack Lens'. Analyze this image and find the most interesting/prominent object.
             
-            Return the result in this EXACT JSON format:
+            1. Identify the object.
+            2. Provide a 'Life Hack': A secret, useful, or creative trick/tip for this object that most people don't know.
+            3. Provide a 'Mind-Blowing Fact': A fascinating piece of history or science about this object.
+            
+            Format the response in this EXACT JSON:
             {
-                "label": "primary label",
-                "summary": "comprehensive detailed summary"
+                "label": "Object Name",
+                "summary": "💡 LIFE HACK: [The hack]\\n\\n✨ DID YOU KNOW? [The fact]"
             }
             """
             
