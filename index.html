@@ -387,9 +387,9 @@
             /* Floating Result Pill (No Scroll) */
             #info-card { 
                 position: absolute !important; 
-                bottom: 5rem !important; 
-                left: 1rem !important; 
-                right: 1rem !important; 
+                bottom: 8.5rem !important; /* Raised to avoid overlapping with dock */
+                left: 1.25rem !important; 
+                right: 1.25rem !important; 
                 width: auto !important; 
                 max-width: none !important;
                 transform: translateY(200%) !important;
@@ -398,16 +398,16 @@
             }
             #info-card.active { transform: translateY(0) !important; }
             #info-card .glass-panel { 
-                background: rgba(15, 23, 42, 0.8) !important; 
-                border-radius: 2rem !important; 
+                background: rgba(15, 23, 42, 0.9) !important; /* Slightly more opaque for readability */
+                border-radius: 2.5rem !important; 
                 border: 1px solid rgba(255,255,255,0.2) !important; 
-                box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-                padding: 1.5rem !important;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.6) !important;
+                padding: 1.25rem !important;
             }
             #info-card * { color: white !important; }
-            #info-card .text-aura-violet { color: #8B5CF6 !important; }
+            #info-card .text-aura-violet { color: #A78BFA !important; }
             
-            #info-content-panel { max-height: 0; opacity: 0; }
+            #info-content-panel { max-height: 0; opacity: 0; overflow: hidden; }
         }
 
         /* Desktop Specifics (Large Screen Pro View) */
@@ -1829,8 +1829,11 @@
 
                 if (!response.ok) {
                     const err = await response.json();
-                    console.warn("AI Analysis skipped:", err.detail);
-                    infoTitle.textContent = "Retrying...";
+                    console.warn("AI Analysis error:", err.detail);
+                    infoTitle.textContent = err.detail.includes("API_KEY") ? "Setup Required" : "Retrying...";
+                    if (err.detail.includes("API_KEY")) {
+                        document.getElementById('info-description').textContent = "Please set GROQ_API_KEY in your environment variables.";
+                    }
                     return;
                 }
 
@@ -1840,7 +1843,8 @@
                 }
             } catch (err) {
                 console.error("Scanning Error:", err);
-                infoTitle.textContent = "Network Error";
+                infoTitle.textContent = "Offline/Error";
+                document.getElementById('info-description').textContent = "Connection to server failed. Ensure the backend is running.";
             }
         }
 

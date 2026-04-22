@@ -28,6 +28,7 @@ DATABASE_NAME = os.getenv("DATABASE_NAME", "ar_scanner")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Initialize Groq Client
+groq_client = None
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
 else:
@@ -111,6 +112,10 @@ async def analyze_image(request: ScanRequest):
         image_data = request.image
         if "base64," in image_data:
             image_data = image_data.split("base64,")[1]
+        
+        # Check for API client
+        if not groq_client:
+            raise HTTPException(status_code=500, detail="GROQ_API_KEY missing in server environment.")
         
         try:
             print(f"DEBUG: Starting Advanced Vision Analysis...")
