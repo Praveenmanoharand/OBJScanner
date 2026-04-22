@@ -413,30 +413,13 @@
 
         /* Desktop Specifics (Large Screen Pro View) */
         @media (min-width: 769px) {
-            #page-scan:not(.hidden) { display: grid; grid-template-columns: 1fr 400px; height: calc(100vh - 100px); margin-top: 100px; padding: 2rem; gap: 2rem; }
-            #camera-container { position: relative; border-radius: 3rem; overflow: hidden; background: #000; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 40px 100px rgba(0,0,0,0.2); }
-            #info-card { 
-                position: static !important; 
-                transform: none !important; 
-                display: block !important; 
-                width: 100% !important; 
-                max-width: none !important;
-                z-index: auto !important;
-            }
-            #info-card .glass-panel { 
-                height: 100%; 
-                border-radius: 3rem; 
-                padding: 2.5rem; 
+            #page-scan:not(.hidden) { 
                 display: flex; 
-                flex-direction: column;
-                background: white !important;
+                flex-direction: column; 
+                height: 100vh; 
+                padding-top: 100px; 
             }
-            #info-content-panel { max-height: none !important; opacity: 1 !important; overflow: visible !important; }
-            #info-dropdown-btn { display: none !important; } /* No dropdown needed on desktop */
-            
-            #scanner-dock { bottom: 4rem !important; }
             #nav-header { top: 2rem !important; max-width: 1200px !important; }
-            
             .hero-title { font-size: 5rem !important; }
         }
     </style>
@@ -884,17 +867,17 @@
             <!-- Scanner Page -->
             <section id="page-scan" class="page-section hidden min-h-screen bg-[#F8FAFC] overflow-hidden flex flex-col">
                 <!-- Spatial UI Toolbar (Pill Shaped) -->
-                <div class="z-30 px-6 py-6 flex items-center justify-center">
-                    <div class="glass-panel px-6 py-3 rounded-full flex items-center gap-6 border border-white/50 shadow-xl shadow-slate-200/20 bg-white/40 backdrop-blur-2xl">
-                        <button onclick="navigateTo('landing')" class="text-slate-deep/60 hover:text-slate-deep transition-all hover:scale-110">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                <div class="z-30 px-6 py-4 flex items-center justify-center">
+                    <div class="glass-panel px-8 py-4 rounded-full flex items-center gap-8 border border-white/50 shadow-2xl shadow-slate-200/20 bg-white/40 backdrop-blur-3xl">
+                        <button onclick="navigateTo('landing')" class="text-slate-deep/60 hover:text-slate-deep transition-all hover:scale-110 p-1">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
                         </button>
-                        <div class="h-4 w-[1px] bg-slate-200"></div>
-                        <h2 class="text-slate-deep font-bold tracking-tight text-sm">Aura Glass Workspace</h2>
-                        <div class="h-4 w-[1px] bg-slate-200"></div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="resetCanvas()" class="px-4 py-1.5 rounded-full text-[10px] font-bold text-slate-soft hover:bg-slate-50 transition-all uppercase tracking-wider">Reset</button>
-                            <button onclick="exportCanvas()" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-aura-violet/20 hover:scale-105 transition-all">Export</button>
+                        <div class="h-6 w-[1px] bg-slate-200/50"></div>
+                        <h2 class="text-slate-deep font-bold tracking-tight text-base">Aura Glass Workspace</h2>
+                        <div class="h-6 w-[1px] bg-slate-200/50"></div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="resetCanvas()" class="px-6 py-2 rounded-full text-xs font-bold text-slate-soft hover:bg-slate-50 transition-all uppercase tracking-widest">Reset</button>
+                            <button onclick="exportCanvas()" class="px-8 py-2.5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-aura-violet/20 hover:scale-105 active:scale-95 transition-all">Export</button>
                         </div>
                     </div>
                 </div>
@@ -906,19 +889,19 @@
                     <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-aura-orange/5 rounded-full blur-[120px] animate-pulse"></div>
                     
                     <!-- Airy Upload Dropzone -->
-                    <div id="drop-zone" class="z-20 w-full max-w-2xl aspect-video rounded-[3rem] border border-white/80 flex flex-col items-center justify-center gap-8 glass-panel bg-white/30 backdrop-blur-3xl shadow-2xl shadow-slate-200/40 hover:shadow-aura-violet/10 hover:border-aura-violet/30 transition-all cursor-pointer group" onclick="document.getElementById('file-input').click()">
+                    <div id="drop-zone" class="z-20 w-full max-w-4xl aspect-[16/9] rounded-[4rem] border border-white/80 flex flex-col items-center justify-center gap-10 glass-panel bg-white/40 backdrop-blur-3xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] hover:shadow-aura-violet/20 hover:border-aura-violet/40 transition-all duration-700 cursor-pointer group" onclick="document.getElementById('file-input').click()">
                         <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
                         
                         <div class="relative">
-                            <div class="absolute inset-0 bg-aura-violet/20 blur-2xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-700"></div>
-                            <div class="w-24 h-24 rounded-[2.5rem] bg-white shadow-xl flex items-center justify-center text-slate-deep group-hover:text-aura-violet transition-colors relative z-10 border border-white">
-                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
+                            <div class="absolute inset-0 bg-aura-violet/30 blur-3xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-1000"></div>
+                            <div class="w-32 h-32 rounded-[3rem] bg-white shadow-2xl flex items-center justify-center text-slate-deep group-hover:text-aura-violet transition-all duration-500 relative z-10 border border-white group-hover:-translate-y-2">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2.5"/></svg>
                             </div>
                         </div>
-
+        
                         <div class="text-center">
-                            <h3 class="text-slate-deep font-bold text-2xl mb-2 tracking-tight">Spatial Image Import</h3>
-                            <p class="text-slate-soft text-sm font-medium">Drag your flat image into the aura</p>
+                            <h3 class="text-slate-deep font-bold text-4xl mb-4 tracking-tighter">Spatial Image Import</h3>
+                            <p class="text-slate-soft text-lg font-medium opacity-60">Drag your flat image into the aura</p>
                         </div>
                     </div>
 
