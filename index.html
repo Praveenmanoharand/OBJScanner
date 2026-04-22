@@ -55,6 +55,20 @@
                     borderRadius: {
                         '4xl': '2rem',
                     }
+                    keyframes: {
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        },
+                        move: {
+                            '0%': { transform: 'translateX(-100px) skewX(-20deg)' },
+                            '100%': { transform: 'translateX(400px) skewX(-20deg)' }
+                        }
+                    },
+                    animation: {
+                        'shimmer': 'shimmer 2s infinite linear',
+                        'move': 'move 2s infinite linear',
+                    }
                 }
             }
         }
@@ -882,69 +896,101 @@
             </section>
 
             <!-- Scanner Page -->
-            <section id="page-scan" class="page-section hidden min-h-screen bg-slate-900 overflow-hidden flex flex-col">
-                <!-- Cyber Workspace Toolbar -->
-                <div class="z-30 px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
+            <section id="page-scan" class="page-section hidden min-h-screen relative overflow-hidden flex flex-col">
+                <!-- Background (Matching Home Page) -->
+                <div class="fixed inset-0 bg-gradient-to-br from-alabaster via-white to-slate-50 -z-10"></div>
+                <div class="fixed top-0 right-0 w-1/2 h-1/2 bg-aura-violet/5 rounded-full blur-3xl -z-10"></div>
+                <div class="fixed bottom-0 left-0 w-1/2 h-1/2 bg-aura-orange/5 rounded-full blur-3xl -z-10"></div>
+
+                <!-- Premium Header Toolbar -->
+                <div class="z-30 px-8 py-5 flex items-center justify-between border-b border-slate-200/50 bg-white/40 backdrop-blur-2xl">
                     <div class="flex items-center gap-6">
-                        <button onclick="navigateTo('landing')" class="text-white/60 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                        <button onclick="navigateTo('landing')" class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-soft hover:text-aura-violet transition-all border border-slate-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
                         </button>
-                        <div class="h-6 w-[1px] bg-white/10"></div>
-                        <h2 class="text-white font-black uppercase tracking-widest text-xs">Magic Workspace v2.0</h2>
+                        <div class="h-6 w-[1px] bg-slate-200"></div>
+                        <div>
+                            <h2 class="text-slate-deep font-bold text-sm tracking-tight">Magic Workspace</h2>
+                            <p class="text-[10px] text-slate-soft font-medium uppercase tracking-widest">Powered by Aura AI</p>
+                        </div>
                     </div>
                     
                     <div class="flex items-center gap-3">
-                        <button onclick="resetCanvas()" class="px-4 py-2 rounded-xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">Reset</button>
-                        <button onclick="exportCanvas()" class="px-4 py-2 rounded-xl bg-aura-violet text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-aura-violet/20 hover:scale-105 transition-all">Export</button>
+                        <button onclick="resetCanvas()" class="px-5 py-2.5 rounded-xl bg-white text-slate-soft text-[10px] font-bold uppercase tracking-widest hover:text-aura-violet transition-all border border-slate-200 shadow-sm">Reset</button>
+                        <button onclick="exportCanvas()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-aura-violet to-aura-orange text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-aura-violet/20 hover:scale-105 transition-all">Export PNG</button>
                     </div>
                 </div>
 
                 <!-- Interactive Canvas Area -->
-                <div id="magic-canvas-container" class="relative flex-1 flex items-center justify-center p-8 overflow-hidden">
-                    <!-- Grid Background -->
-                    <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.05)_0%,transparent_100%)] pointer-events-none"></div>
+                <div id="magic-canvas-container" class="relative flex-1 flex items-center justify-center p-12 overflow-hidden">
+                    <!-- Subtle Mesh Background -->
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none"></div>
                     
-                    <!-- Upload Dropzone -->
-                    <div id="drop-zone" class="z-20 w-full max-w-xl aspect-video rounded-[3rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 glass-panel hover:border-aura-violet/50 transition-all cursor-pointer group" onclick="document.getElementById('file-input').click()">
+                    <!-- Upload Dropzone (Premium Style) -->
+                    <div id="drop-zone" class="z-20 w-full max-w-2xl aspect-video rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-8 bg-white/60 backdrop-blur-xl hover:border-aura-violet/40 transition-all cursor-pointer group shadow-2xl shadow-slate-200/50" onclick="document.getElementById('file-input').click()">
                         <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
-                        <div class="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white/40 group-hover:text-aura-violet transition-colors">
-                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2.5"/></svg>
+                        
+                        <div class="relative">
+                            <div class="w-24 h-24 rounded-3xl bg-aura-violet/5 flex items-center justify-center text-aura-violet group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-aura-orange animate-ping opacity-20"></div>
                         </div>
+
                         <div class="text-center">
-                            <h3 class="text-white font-bold text-xl mb-1">Upload flat image</h3>
-                            <p class="text-white/40 text-sm">Drag and drop or click to browse</p>
+                            <h3 class="text-slate-deep font-display text-2xl font-bold mb-2">Drop your design here</h3>
+                            <p class="text-slate-soft text-sm max-w-xs mx-auto leading-relaxed">AI will automatically detect layers, text, and objects for you to edit.</p>
+                        </div>
+
+                        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100">
+                            <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                            <span class="text-[10px] font-bold text-slate-soft uppercase tracking-widest">Ready for Magic Grab</span>
                         </div>
                     </div>
 
                     <!-- Fabric Canvas Wrapper -->
-                    <div id="canvas-wrapper" class="hidden relative shadow-2xl shadow-black/50 rounded-2xl overflow-hidden border border-white/10">
+                    <div id="canvas-wrapper" class="hidden relative shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] rounded-2xl overflow-hidden border border-white bg-white p-1">
                         <canvas id="main-canvas"></canvas>
                     </div>
 
-                    <!-- Processing Overlay -->
-                    <div id="magic-loader" class="hidden absolute inset-0 z-40 bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center gap-8">
-                        <div class="relative">
-                            <div class="w-24 h-24 rounded-full border-4 border-white/5 border-t-aura-violet animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-aura-violet animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                    <!-- NEW MAGIC LOADING ANIMATION -->
+                    <div id="magic-loader" class="hidden absolute inset-0 z-40 bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center">
+                        <div class="relative w-80 h-48 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden shadow-inner">
+                            <!-- Magic Scanning Beam -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-aura-violet to-aura-orange animate-bounce flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                                </div>
+                                <div class="text-center px-6">
+                                    <h3 class="text-slate-deep font-bold text-sm mb-1">Aura AI at work...</h3>
+                                    <div class="w-48 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-aura-violet animate-[shimmer_2s_infinite]"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-center">
-                            <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm mb-2">Magic Processing</h3>
-                            <p class="text-white/40 text-xs animate-pulse">Running SAM + OCR + LaMa Pipeline...</p>
+                            <!-- Shimmer Effect -->
+                            <div class="absolute top-0 left-0 w-2 h-full bg-white/60 skew-x-[-20deg] animate-[move_1.5s_infinite]"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Magic Action Dock -->
-                <div id="magic-dock" class="z-30 px-6 py-8 flex items-center justify-center gap-4">
-                    <button id="magic-extract-btn" onclick="triggerMagicExtract()" class="px-12 py-5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-aura-violet/30 hover:scale-105 active:scale-95 transition-all hidden">
-                        Magic Extract Layers
+                <div id="magic-dock" class="z-30 px-6 py-10 flex items-center justify-center gap-6">
+                    <button id="magic-extract-btn" onclick="triggerMagicExtract()" class="px-14 py-5 rounded-full bg-slate-deep text-white font-bold text-sm uppercase tracking-[0.2em] shadow-2xl hover:bg-aura-violet hover:-translate-y-1 active:scale-95 transition-all hidden">
+                        <span class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                            Magic Extract
+                        </span>
                     </button>
-                    <div id="tool-bar" class="hidden flex items-center gap-2 p-2 rounded-2xl bg-white/5 border border-white/10">
-                        <button onclick="setMode('select')" class="tool-btn active p-3 rounded-xl text-white/40 hover:text-white transition-colors" title="Select"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg></button>
-                        <button onclick="setMode('delete')" class="p-3 rounded-xl text-white/40 hover:text-red-400 transition-colors" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                    
+                    <div id="tool-bar" class="hidden flex items-center gap-1 p-2 rounded-2xl bg-white shadow-xl border border-slate-100">
+                        <button onclick="setMode('select')" class="tool-btn active p-3.5 rounded-xl text-slate-400 hover:text-aura-violet hover:bg-slate-50 transition-all" title="Select Tool">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" stroke-width="2"/></svg>
+                        </button>
+                        <div class="w-[1px] h-6 bg-slate-100 mx-1"></div>
+                        <button onclick="setMode('delete')" class="p-3.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Remove Layer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
+                        </button>
                     </div>
                 </div>
             </section>
