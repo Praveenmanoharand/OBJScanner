@@ -1803,23 +1803,19 @@
         }
 
         async function startDetectionLoop() {
-            if (isDetectionActive) return;
-            isDetectionActive = true;
+            if (!isDetectionActive) return;
             
             async function loop() {
-                if (currentPage !== 'scan') {
+                if (!isDetectionActive || currentPage !== 'scan') {
                     isDetectionActive = false;
                     return;
                 }
                 
-                const infoCard = document.getElementById('info-card');
-                if (infoCard.classList.contains('hidden') || !infoCard.classList.contains('active')) {
-                    // Call the real AI Backend every 3 seconds to save data/battery
-                    await captureAndAnalyze();
-                }
+                // Call the real AI Backend using Groq
+                await captureAndAnalyze();
                 
-                // Wait 3 seconds before next scan to prevent API spam
-                if (currentPage === 'scan') {
+                // Wait 3 seconds before next scan
+                if (isDetectionActive) {
                     setTimeout(loop, 3000);
                 }
             }
@@ -1828,13 +1824,19 @@
         }
 
         function performScan() {
-            // Manual scan still works for desktop or explicit trigger
-            const scanEffect = document.getElementById('scanning-effect');
-            scanEffect.classList.remove('hidden');
-            setTimeout(() => {
-                scanEffect.classList.add('hidden');
-                showObjectInfo('Manual Scan', 0.95);
-            }, 800);
+            const scanBtn = document.querySelector('button[onclick="performScan()"]');
+            
+            if (!isDetectionActive) {
+                isDetectionActive = true;
+                if (scanBtn) scanBtn.classList.add('animate-pulse', 'ring-4', 'ring-white/50');
+                showToast('AI Scanning', 'Live Vision is now active.');
+                startDetectionLoop();
+            } else {
+                isDetectionActive = false;
+                if (scanBtn) scanBtn.classList.remove('animate-pulse', 'ring-4', 'ring-white/50');
+                showToast('Scanning Paused', 'Live Vision is stopped.');
+                // The loop will stop automatically because isDetectionActive is false
+            }
         }
 
         function toggleFlash() {
