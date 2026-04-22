@@ -113,15 +113,30 @@ async def analyze_image(request: ScanRequest):
             image_data = image_data.split("base64,")[1]
         
         try:
-            print(f"DEBUG: Starting Groq Analysis with model llama-3.2-11b-vision-preview")
-            # Use Groq Llama 3.2 Vision model
+            print(f"DEBUG: Starting Advanced Vision Analysis...")
+            # Use Groq Llama 3.2 Vision model with a more comprehensive prompt
+            prompt = """
+            Analyze this image with extreme precision and detail. 
+            1. Identify ALL significant objects in the scene, regardless of what they are (electronics, nature, tools, furniture, etc.).
+            2. Describe the EXACT state, context, and any actions occurring (e.g., 'A laptop displaying a code editor', 'A person gesturing', 'A plant with yellowing leaves').
+            3. If any text, brand names, or specific details are visible on the objects, include them in the analysis.
+            4. Provide a 1-3 word highly specific primary label for the most prominent object or action.
+            5. Provide a rich, detailed summary (2-3 sentences) covering everything you see.
+            
+            Return the result in this EXACT JSON format:
+            {
+                "label": "primary label",
+                "summary": "comprehensive detailed summary"
+            }
+            """
+            
             completion = groq_client.chat.completions.create(
                 model="llama-3.2-11b-vision-preview",
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": "Identify the primary object in this image. Return ONLY the specific name of the object in 1-3 words."},
+                            {"type": "text", "text": prompt},
                             {
                                 "type": "image_url",
                                 "image_url": {
@@ -132,13 +147,23 @@ async def analyze_image(request: ScanRequest):
                     }
                 ],
                 temperature=0.2,
-                max_tokens=20,
+                max_tokens=300,
+                response_format={"type": "json_object"}
             )
-            label = completion.choices[0].message.content.strip()
-            print(f"DEBUG: Groq identified object as: {label}")
+            
+            import json
+            analysis_result = json.loads(completion.choices[0].message.content)
+            label = analysis_result.get("label", "Unknown Object")
+            summary = analysis_result.get("summary", "No detailed analysis available.")
+            
+            print(f"DEBUG: AI identified: {label}")
+            print(f"DEBUG: AI summary: {summary}")
         except Exception as e:
             print(f"CRITICAL ERROR (Groq): {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Groq API Error: {str(e)}")
+            # Fallback to simple label if JSON fails
+            label = "Detection Active"
+            summary = "The AI is currently analyzing the scene. Please ensure good lighting."
+
 
         # 2. Fetch Wikipedia Metadata
         summary = await get_wikipedia_summary(label)

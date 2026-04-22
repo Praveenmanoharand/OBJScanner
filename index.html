@@ -1702,19 +1702,30 @@
                 const clampedX = Math.max(0, Math.min(scaledX, window.innerWidth - scaledWidth));
                 const clampedY = Math.max(0, Math.min(scaledY, window.innerHeight - scaledHeight));
 
+                const isAIPending = isDetectionActive && index === 0; // Highlight the primary object being analyzed by AI
+
                 return `
-                    <div class="absolute transition-all duration-200 ease-out" 
+                    <div class="absolute transition-all duration-300 ease-out" 
                          style="left: ${clampedX}px; top: ${clampedY}px; width: ${scaledWidth}px; height: ${scaledHeight}px;"
                          onclick="showObjectInfo('${pred.class}', ${pred.score})">
-                        <!-- Corner Brackets -->
-                        <div class="ar-corner ar-corner-tl"></div>
-                        <div class="ar-corner ar-corner-tr"></div>
-                        <div class="ar-corner ar-corner-bl"></div>
-                        <div class="ar-corner ar-corner-br"></div>
                         
-                        <!-- Label -->
-                        <div class="absolute -top-10 left-0 px-3 py-1.5 rounded-full glass-panel text-xs font-medium text-slate-deep whitespace-nowrap">
-                            ${pred.class} (${Math.round(pred.score * 100)}%)
+                        <!-- Premium AR Corner Brackets with Glow -->
+                        <div class="absolute inset-0 border-2 border-transparent group">
+                            <div class="ar-corner ar-corner-tl !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-tr !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-bl !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-br !border-aura-violet !w-6 !h-6"></div>
+                            
+                            <!-- Animated Scanning Beam if AI is active on this object -->
+                            ${isAIPending ? '<div class="absolute inset-0 bg-gradient-to-b from-aura-violet/20 to-transparent h-1/2 scanning-line"></div>' : ''}
+                        </div>
+                        
+                        <!-- Floating Label Tag -->
+                        <div class="absolute -top-12 left-0 flex items-center gap-2 px-3 py-2 rounded-xl glass-panel shadow-xl border border-white/40">
+                            <div class="w-2 h-2 rounded-full ${isAIPending ? 'bg-aura-orange animate-pulse' : 'bg-green-500'}"></div>
+                            <span class="text-[10px] font-black text-slate-deep uppercase tracking-widest">
+                                ${pred.class} ${Math.round(pred.score * 100)}%
+                            </span>
                         </div>
                     </div>
                 `;
@@ -1790,10 +1801,13 @@
         async function captureAndAnalyze() {
             if (currentPage !== 'scan' || !videoStream || !isDetectionActive) return;
             
+            const infoCard = document.getElementById('info-card');
             const infoTitle = document.getElementById('info-title');
-            const originalTitle = infoTitle.textContent;
+            
+            // Show scanning state if not already active
             if (!infoCard.classList.contains('active')) {
-                infoTitle.textContent = "Analyzing...";
+                infoTitle.textContent = "Analyzing Scene...";
+                infoCard.classList.remove('hidden');
                 infoCard.classList.add('active');
             }
 
@@ -1842,9 +1856,9 @@
                 // Call the real AI Backend using Groq
                 await captureAndAnalyze();
                 
-                // Wait 3 seconds before next scan
+                // Wait 1 second before next scan for near-real-time feedback
                 if (isDetectionActive) {
-                    setTimeout(loop, 3000);
+                    setTimeout(loop, 1000);
                 }
             }
             
