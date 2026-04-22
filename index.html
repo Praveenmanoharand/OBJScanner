@@ -351,13 +351,11 @@
             
             /* Scanner: Pure AR Mode (Full Display) */
             #page-scan:not(.hidden) { 
-                position: fixed !important; 
-                inset: 0 !important; 
-                z-index: 50 !important; 
                 display: block !important;
-                overflow: hidden !important; /* Prevent scroll gaps */
-                height: 100vh !important;
-                width: 100vw !important;
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+                background: #F8FAFC !important;
+                padding-bottom: 120px !important;
             }
             #camera-feed { 
                 position: absolute !important; 
@@ -370,9 +368,10 @@
             /* Show Scanner Dock on Mobile and Raise it */
             #scanner-dock { 
                 display: block !important; 
-                bottom: 3rem !important; 
+                position: fixed !important;
+                bottom: 2rem !important; 
                 z-index: 100 !important;
-                max-width: 80% !important;
+                max-width: 90% !important;
                 left: 50% !important;
                 transform: translateX(-50%) !important;
             }
@@ -426,6 +425,16 @@
             #info-card .text-aura-violet { color: #A78BFA !important; }
             
             #info-content-panel { max-height: 0; opacity: 0; overflow: hidden; }
+
+            /* Fix Drop Zone and Canvas Container for Mobile */
+            #magic-canvas-container { padding: 1rem !important; }
+            #drop-zone { 
+                aspect-ratio: 4/5 !important; 
+                height: auto !important; 
+                padding: 2rem 1rem !important;
+                border-radius: 2rem !important;
+            }
+            #drop-zone h3 { font-size: 1.75rem !important; }
         }
 
         /* Desktop Specifics (Large Screen Pro View) */
