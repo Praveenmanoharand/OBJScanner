@@ -1790,6 +1790,13 @@
         async function captureAndAnalyze() {
             if (currentPage !== 'scan' || !videoStream || !isDetectionActive) return;
             
+            const infoTitle = document.getElementById('info-title');
+            const originalTitle = infoTitle.textContent;
+            if (!infoCard.classList.contains('active')) {
+                infoTitle.textContent = "Analyzing...";
+                infoCard.classList.add('active');
+            }
+
             const video = document.getElementById('camera-feed');
             const canvas = document.createElement('canvas');
             canvas.width = 640;
@@ -1797,7 +1804,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            const base64Image = canvas.toDataURL('image/jpeg', 0.7);
+            const base64Image = canvas.toDataURL('image/jpeg', 0.6);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/scan/analyze`, {
@@ -1807,7 +1814,9 @@
                 });
 
                 if (!response.ok) {
-                    console.warn("AI Analysis skipped: Backend error or missing API Key.");
+                    const err = await response.json();
+                    console.warn("AI Analysis skipped:", err.detail);
+                    infoTitle.textContent = "Retrying...";
                     return;
                 }
 
@@ -1817,6 +1826,7 @@
                 }
             } catch (err) {
                 console.error("Scanning Error:", err);
+                infoTitle.textContent = "Network Error";
             }
         }
 

@@ -113,6 +113,7 @@ async def analyze_image(request: ScanRequest):
             image_data = image_data.split("base64,")[1]
         
         try:
+            print(f"DEBUG: Starting Groq Analysis with model llama-3.2-11b-vision-preview")
             # Use Groq Llama 3.2 Vision model
             completion = groq_client.chat.completions.create(
                 model="llama-3.2-11b-vision-preview",
@@ -134,9 +135,10 @@ async def analyze_image(request: ScanRequest):
                 max_tokens=20,
             )
             label = completion.choices[0].message.content.strip()
+            print(f"DEBUG: Groq identified object as: {label}")
         except Exception as e:
-            print(f"Groq Error: {e}")
-            raise HTTPException(status_code=500, detail="AI Analysis failed.")
+            print(f"CRITICAL ERROR (Groq): {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Groq API Error: {str(e)}")
 
         # 2. Fetch Wikipedia Metadata
         summary = await get_wikipedia_summary(label)
