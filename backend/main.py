@@ -75,22 +75,26 @@ class ScanResponse(BaseModel):
 
 # Helper: Fetch Wikipedia Summary
 async def get_wikipedia_summary(query: str) -> str:
+    # Quick sanitize
+    query = query.strip().split('\n')[0]
     url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{query.replace(' ', '_')}"
-    async with httpx.AsyncClient() as client:
+    # Use short timeout for Vercel
+    async with httpx.AsyncClient(timeout=2.0) as client:
         try:
             response = await client.get(url)
             if response.status_code == 200:
                 data = response.json()
-                extract = data.get("extract", "No summary available.")
+                extract = data.get("extract", "")
+                if not extract: return ""
                 # Split by period and take first two sentences
                 sentences = extract.split(". ")
                 if len(sentences) > 2:
                     return ". ".join(sentences[:2]) + "."
                 return extract
-            return f"Information about {query} could not be retrieved."
+            return ""
         except Exception as e:
-            print(f"Wikipedia API Error: {e}")
-            return "Knowledge base unavailable."
+            print(f"Wikipedia Timeout/Error: {e}")
+            return ""
 
 # Endpoints
 @app.get("/")
