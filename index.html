@@ -2090,12 +2090,10 @@
             if (!isDetectionActive) {
                 isDetectionActive = true;
                 if (scanBtn) scanBtn.classList.add('animate-pulse', 'ring-4', 'ring-white/50');
-                showToast('AI Scanning', 'Live Vision is now active.');
                 startDetectionLoop();
             } else {
                 isDetectionActive = false;
                 if (scanBtn) scanBtn.classList.remove('animate-pulse', 'ring-4', 'ring-white/50');
-                showToast('Scanning Paused', 'Live Vision is stopped.');
                 // The loop will stop automatically because isDetectionActive is false
             }
         }
