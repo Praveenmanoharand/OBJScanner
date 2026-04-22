@@ -427,14 +427,17 @@
             #info-content-panel { max-height: 0; opacity: 0; overflow: hidden; }
 
             /* Fix Drop Zone and Canvas Container for Mobile */
-            #magic-canvas-container { padding: 1rem !important; }
+            #magic-canvas-container { padding: 1.5rem 1rem !important; }
             #drop-zone { 
-                aspect-ratio: 4/5 !important; 
-                height: auto !important; 
-                padding: 2rem 1rem !important;
+                aspect-ratio: 1/1 !important; 
+                max-height: 400px !important;
+                padding: 1.5rem !important;
                 border-radius: 2rem !important;
+                gap: 1rem !important;
             }
-            #drop-zone h3 { font-size: 1.75rem !important; }
+            #drop-zone h3 { font-size: 1.5rem !important; margin-bottom: 0.5rem !important; }
+            #drop-zone .w-32 { width: 5rem !important; height: 5rem !important; }
+            #drop-zone svg { width: 1.5rem !important; height: 1.5rem !important; }
         }
 
         /* Desktop Specifics (Large Screen Pro View) */
@@ -963,14 +966,14 @@
             <!-- Scanner Page -->
             <section id="page-scan" class="page-section hidden min-h-screen bg-[#F8FAFC] flex flex-col">
                 <!-- Spatial UI Toolbar (Pill Shaped) -->
-                <div class="z-30 px-6 py-4 flex items-center justify-center">
-                    <div class="glass-panel px-8 py-4 rounded-full flex items-center gap-8 border border-white/50 shadow-2xl shadow-slate-200/20 bg-white/40 backdrop-blur-3xl">
+                <div class="z-30 px-4 py-3 flex items-center justify-center">
+                    <div class="glass-panel px-4 md:px-8 py-3 md:py-4 rounded-full flex items-center gap-4 md:gap-8 border border-white/50 shadow-2xl shadow-slate-200/20 bg-white/40 backdrop-blur-3xl">
                         <button onclick="navigateTo('landing')" class="text-slate-deep/60 hover:text-slate-deep transition-all hover:scale-110 p-1">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
                         </button>
-                        <div class="h-6 w-[1px] bg-slate-200/50"></div>
-                        <h2 class="text-slate-deep font-bold tracking-tight text-base">OML Magic Workspace</h2>
-                        <div class="h-6 w-[1px] bg-slate-200/50"></div>
+                        <div class="h-6 w-[1px] bg-slate-200/50 hidden md:block"></div>
+                        <h2 class="text-slate-deep font-bold tracking-tight text-base hidden md:block">OML Magic Workspace</h2>
+                        <div class="h-6 w-[1px] bg-slate-200/50 hidden md:block"></div>
                         <div class="flex items-center gap-3">
                             <button onclick="resetCanvas()" class="px-6 py-2 rounded-full text-xs font-bold text-slate-soft hover:bg-slate-50 transition-all uppercase tracking-widest">Reset</button>
                             <button onclick="exportCanvas()" class="px-8 py-2.5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-aura-violet/20 hover:scale-105 active:scale-95 transition-all">Export</button>
