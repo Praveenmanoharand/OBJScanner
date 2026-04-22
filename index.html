@@ -1,15 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA MAGIC | Layer Separator</title>
-    
-    <!-- Libraries -->
+    <title>OBJ Scanner - Universal AR Object Scanner</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -20,13 +40,20 @@
                         'body': ['Inter', 'sans-serif'],
                     },
                     colors: {
-                        cyber: {
-                            black: '#020617',
-                            deep: '#0F172A',
+                        alabaster: '#FAFBFC',
+                        pearl: '#FFFFFF',
+                        slate: {
+                            deep: '#1E293B',
+                            soft: '#64748B',
+                            light: '#94A3B8',
+                        },
+                        aura: {
                             violet: '#8B5CF6',
-                            neon: '#10B981',
-                            pink: '#D946EF',
+                            orange: '#F97316',
                         }
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
                     }
                 }
             }
@@ -35,292 +62,1817 @@
 
     <style>
         :root {
-            --accent: #8B5CF6;
-            --bg: #020617;
+            --bg-primary: #FAFBFC;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --accent-violet: #8B5CF6;
+            --accent-orange: #F97316;
+            --glass-bg: rgba(255, 255, 255, 0.72);
+            --glass-border: rgba(255, 255, 255, 0.5);
         }
 
-        body { 
-            background: var(--bg);
-            color: white;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
             font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow-x: hidden;
         }
 
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
 
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Gradient text */
         .gradient-text {
-            background: linear-gradient(135deg, #8B5CF6, #D946EF);
+            background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-orange) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .cyber-border {
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+        /* Gradient border */
+        .gradient-border {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
-        .magic-btn {
-            background: linear-gradient(90deg, #8B5CF6, #D946EF);
-            transition: all 0.3s ease;
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1.5px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--accent-violet), var(--accent-orange));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .magic-btn:hover {
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
-            transform: scale(1.02);
+        .gradient-border:hover::before {
+            opacity: 1;
         }
 
-        .canvas-workspace {
-            background: #000;
-            border-radius: 2rem;
-            overflow: hidden;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Glass panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.04),
+                0 8px 48px rgba(0, 0, 0, 0.02);
         }
 
-        /* Hide Scrollbar */
-        ::-webkit-scrollbar { width: 0px; }
-        
-        .loading-glow {
-            animation: glow-pulse 2s infinite ease-in-out;
+        /* Floating animation */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(2deg);
+            }
         }
 
-        @keyframes glow-pulse {
-            0%, 100% { filter: drop-shadow(0 0 5px #8B5CF6); }
-            50% { filter: drop-shadow(0 0 20px #D946EF); }
+        @keyframes float-slow {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(10px, -15px) rotate(1deg); }
+            66% { transform: translate(-5px, -10px) rotate(-1deg); }
+        }
+
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-animation {
+            animation: float-slow 6s ease-in-out infinite;
+        }
+
+        .bounce-animation {
+            animation: bounce-subtle 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes scanning {
+            0% {
+                top: 0;
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                top: calc(100% - 4px);
+                opacity: 1;
+            }
+        }
+
+        .scanning-line {
+            animation: scanning 2s ease-in-out infinite;
+        }
+
+        /* Page transition */
+        .page-enter {
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+        }
+
+        .page-enter-active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Masonry grid */
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            grid-auto-rows: 10px;
+        }
+
+        .masonry-item {
+            grid-row-end: span var(--row-span, 22);
+        }
+
+        /* AR corner brackets */
+        .ar-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--accent-violet);
+            filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+        }
+
+        .ar-corner-tl {
+            top: 0;
+            left: 0;
+            border-top: 2px solid;
+            border-left: 2px solid;
+            border-radius: 4px 0 0 0;
+        }
+
+        .ar-corner-tr {
+            top: 0;
+            right: 0;
+            border-top: 2px solid;
+            border-right: 2px solid;
+            border-radius: 0 4px 0 0;
+        }
+
+        .ar-corner-bl {
+            bottom: 0;
+            left: 0;
+            border-bottom: 2px solid;
+            border-left: 2px solid;
+            border-radius: 0 0 0 4px;
+        }
+
+        .ar-corner-br {
+            bottom: 0;
+            right: 0;
+            border-bottom: 2px solid;
+            border-right: 2px solid;
+            border-radius: 0 0 4px 0;
+        }
+
+        /* Reduce motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus states */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--accent-violet);
+            outline-offset: 2px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(139, 92, 246, 0.1);
+            border-top-color: var(--accent-violet);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Hero canvas */
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 640px) {
+            :root {
+                --glass-bg: rgba(255, 255, 255, 0.85);
+            }
+            .font-display { font-size: 85% !important; }
+            .glass-panel { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        }
+
+        /* Mobile Redesign (Spatial Layout) - STRICTLY MOBILE ONLY */
+        @media (max-width: 768px) {
+            .page-section { padding-top: 0 !important; }
+            .hero-title { font-size: 2.6rem !important; text-align: left; line-height: 1.1; }
+            
+            /* Minimalist Top Nav (Always Visible & Transparent) */
+            #nav-header { top: 0 !important; left: 0 !important; transform: none !important; width: 100% !important; max-width: none !important; z-index: 100 !important; }
+            #nav-header .glass-panel { border-radius: 0; padding: 0.75rem 1.25rem; border: none; background: rgba(255,255,255,0.95) !important; backdrop-filter: blur(10px) !important; border-bottom: 1px solid rgba(0,0,0,0.05); }
+            #nav-header .text-slate-deep { color: #1e293b !important; }
+            #menu-toggle-btn { background: linear-gradient(135deg, #8B5CF6, #F97316) !important; color: white !important; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3); border: none !important; }
+            
+            /* Page Padding Fix (Non-Scanner Pages) */
+            .page-section { padding-top: 5rem !important; }
+            #page-scan { padding-top: 0 !important; }
+            
+            /* Scanner: Pure AR Mode (Full Display) */
+            #page-scan:not(.hidden) { 
+                position: fixed !important; 
+                inset: 0 !important; 
+                z-index: 50 !important; 
+                background: #000 !important; 
+                display: block !important;
+                overflow: hidden !important; /* Prevent scroll gaps */
+                height: 100vh !important;
+                width: 100vw !important;
+            }
+            #camera-feed { 
+                position: absolute !important; 
+                inset: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important; 
+                object-fit: cover !important; 
+            }
+            
+            /* Show Scanner Dock on Mobile and Raise it */
+            #scanner-dock { 
+                display: block !important; 
+                bottom: 3rem !important; 
+                z-index: 100 !important;
+                max-width: 80% !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+            #scanner-dock .glass-panel {
+                background: rgba(15, 23, 42, 0.4) !important;
+                backdrop-filter: blur(20px) !important;
+                border: 1px solid rgba(255,255,255,0.1) !important;
+            }
+            #scanner-dock svg { color: white !important; }
+            #mobile-dock { display: none !important; }
+            
+            /* Floating Result Pill (No Scroll) */
+            #info-card { 
+                position: absolute !important; 
+                bottom: 8.5rem !important; /* Raised to avoid overlapping with dock */
+                left: 1.25rem !important; 
+                right: 1.25rem !important; 
+                width: auto !important; 
+                max-width: none !important;
+                transform: translateY(200%) !important;
+                z-index: 60 !important;
+                display: block !important;
+            }
+            #info-card.active { transform: translateY(0) !important; }
+            #info-card .glass-panel { 
+                background: rgba(15, 23, 42, 0.9) !important; /* Slightly more opaque for readability */
+                border-radius: 2.5rem !important; 
+                border: 1px solid rgba(255,255,255,0.2) !important; 
+                box-shadow: 0 25px 60px rgba(0,0,0,0.6) !important;
+                padding: 1.25rem !important;
+            }
+            #info-card * { color: white !important; }
+            #info-card .text-aura-violet { color: #A78BFA !important; }
+            
+            #info-content-panel { max-height: 0; opacity: 0; overflow: hidden; }
+        }
+
+        /* Desktop Specifics (Large Screen Pro View) */
+        @media (min-width: 769px) {
+            #page-scan:not(.hidden) { display: grid; grid-template-columns: 1fr 400px; height: calc(100vh - 100px); margin-top: 100px; padding: 2rem; gap: 2rem; }
+            #camera-container { position: relative; border-radius: 3rem; overflow: hidden; background: #000; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 40px 100px rgba(0,0,0,0.2); }
+            #info-card { 
+                position: static !important; 
+                transform: none !important; 
+                display: block !important; 
+                width: 100% !important; 
+                max-width: none !important;
+                z-index: auto !important;
+            }
+            #info-card .glass-panel { 
+                height: 100%; 
+                border-radius: 3rem; 
+                padding: 2.5rem; 
+                display: flex; 
+                flex-direction: column;
+                background: white !important;
+            }
+            #info-content-panel { max-height: none !important; opacity: 1 !important; overflow: visible !important; }
+            #info-dropdown-btn { display: none !important; } /* No dropdown needed on desktop */
+            
+            #scanner-dock { bottom: 4rem !important; }
+            #nav-header { top: 2rem !important; max-width: 1200px !important; }
+            
+            .hero-title { font-size: 5rem !important; }
         }
     </style>
 </head>
+
 <body>
-    <div id="app" class="min-h-screen relative overflow-hidden">
-        <!-- Floating Nav -->
-        <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
-            <div class="glass-panel px-8 py-4 rounded-full flex items-center justify-between cyber-border">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-tr from-cyber-violet to-cyber-pink rounded-xl flex items-center justify-center loading-glow">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-width="2"/></svg>
-                    </div>
-                    <span class="font-display font-bold text-xl tracking-tighter">AURA<span class="text-cyber-violet">MAGIC</span></span>
-                </div>
-                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-                    <button onclick="navigateTo('home')" class="hover:text-white transition-colors">Vision</button>
-                    <button onclick="navigateTo('magic')" class="hover:text-white transition-colors">Magic Grab</button>
-                    <button onclick="navigateTo('dashboard')" class="hover:text-white transition-colors">History</button>
-                </div>
-                <button onclick="navigateTo('magic')" class="px-6 py-2 rounded-full border border-cyber-violet/50 text-cyber-violet font-bold text-sm hover:bg-cyber-violet hover:text-white transition-all">
-                    Launch Magic
-                </button>
-            </div>
-        </nav>
+    <!-- App Container -->
+    <div id="app" class="min-h-screen relative">
 
-        <!-- Home Section -->
-        <section id="page-home" class="page-section pt-32 pb-20 px-6 min-h-screen flex flex-col items-center justify-center">
-            <div class="max-w-4xl text-center">
-                <div class="inline-block px-4 py-1 rounded-full border border-cyber-violet/30 bg-cyber-violet/10 text-cyber-violet text-xs font-bold tracking-widest uppercase mb-6">
-                    Next-Gen Layer Separation
+    <!-- Floating Island Navigation -->
+    <nav id="nav-header" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl pointer-events-auto transition-all duration-500">
+        <div class="glass-panel px-6 py-4 rounded-3xl flex items-center justify-between shadow-2xl border border-white/40">
+            <!-- Brand -->
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="navigateTo('landing')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-aura-violet to-aura-orange flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
                 </div>
-                <h1 class="font-display text-6xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
-                    DECONSTRUCT <span class="gradient-text">REALITY.</span>
-                </h1>
-                <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
-                    Point, Upload, and Separate. Turn any flat image into editable, draggable 3D-like layers with Meta SAM and AI Magic.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onclick="navigateTo('magic')" class="magic-btn px-10 py-5 rounded-full font-black text-lg shadow-xl shadow-cyber-violet/20">
-                        Start Extracting
-                    </button>
-                    <button onclick="navigateTo('dashboard')" class="px-10 py-5 rounded-full glass-panel border border-white/10 font-bold hover:bg-white/5 transition-all">
-                        View Workspace
+                <span class="font-display font-bold text-xl tracking-tight hidden sm:block text-slate-deep">AURA<span class="text-aura-violet"> MAGIC GRAB</span></span>
+            </div>
+
+            <!-- Right Actions Group -->
+            <div class="flex items-center gap-1 sm:gap-4 ml-auto">
+                <!-- Nav Links (Desktop) -->
+                <div class="hidden lg:flex items-center gap-1 sm:gap-2">
+                    <button onclick="navigateTo('landing')" class="nav-link text-slate-soft hover:text-slate-deep font-semibold px-3 py-2 rounded-xl hover:bg-white/50 transition-all text-xs lg:text-sm" data-page="landing">Home</button>
+                    <button onclick="navigateTo('dashboard')" class="nav-link text-slate-soft hover:text-slate-deep font-semibold px-3 py-2 rounded-xl hover:bg-white/50 transition-all text-xs lg:text-sm" data-page="dashboard">Dashboard</button>
+                    <button onclick="navigateTo('insights')" class="nav-link text-slate-soft hover:text-slate-deep font-semibold px-3 py-2 rounded-xl hover:bg-white/50 transition-all text-xs lg:text-sm" data-page="insights">Insights</button>
+                    <button onclick="navigateTo('labs')" class="nav-link text-slate-soft hover:text-slate-deep font-semibold px-3 py-2 rounded-xl hover:bg-white/50 transition-all text-xs lg:text-sm" data-page="labs">Labs</button>
+                    <button onclick="navigateTo('support')" class="nav-link text-slate-soft hover:text-slate-deep font-semibold px-3 py-2 rounded-xl hover:bg-white/50 transition-all text-xs lg:text-sm" data-page="support">Support</button>
+                </div>
+
+                <button onclick="navigateTo('scan')" class="hidden sm:flex bg-gradient-to-r from-aura-violet to-aura-orange text-white px-4 py-2 lg:px-6 lg:py-2.5 rounded-xl font-bold shadow-lg shadow-aura-violet/25 hover:scale-105 transition-all text-xs lg:text-sm ml-1">Start Scan</button>
+                
+                <!-- Mobile Actions -->
+                <div class="flex lg:hidden items-center">
+                    <button id="menu-toggle-btn" onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-soft transition-all active:scale-90">
+                        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path id="menu-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
                     </button>
                 </div>
             </div>
-        </section>
+        </div>
+    </nav>
 
-        <!-- Magic Workspace Section -->
-        <section id="page-magic" class="page-section hidden pt-32 pb-20 px-6 min-h-screen">
-            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <!-- Toolbar -->
-                <div class="lg:col-span-1 space-y-6">
-                    <div class="glass-panel p-6 rounded-3xl cyber-border">
-                        <h3 class="font-display font-bold text-xl mb-4">Magic Tools</h3>
-                        <div class="space-y-3">
-                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
-                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/></svg>
-                                <span class="font-bold text-sm">Smart Grab</span>
-                            </button>
-                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
-                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
-                                <span class="font-bold text-sm">Text Extract</span>
-                            </button>
-                            <button class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 hover:bg-cyber-violet/20 transition-all text-left">
-                                <svg class="w-5 h-5 text-cyber-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
-                                <span class="font-bold text-sm">Inpaint Background</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="upload-zone" class="glass-panel p-8 rounded-3xl border-2 border-dashed border-white/10 hover:border-cyber-violet/50 transition-all group cursor-pointer text-center">
-                        <input type="file" id="image-upload" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
-                        <div onclick="document.getElementById('image-upload').click()">
-                            <svg class="w-12 h-12 text-slate-500 group-hover:text-cyber-violet mx-auto mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg>
-                            <p class="font-bold text-sm text-slate-400 group-hover:text-white">Upload Flat Image</p>
-                            <p class="text-[10px] text-slate-600 mt-2">RAW, PNG, JPG supported</p>
-                        </div>
-                    </div>
-                    
-                    <button id="magic-btn" onclick="startMagicExtraction()" class="hidden w-full magic-btn py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3">
-                        <span>MAGIC GRAB</span>
-                        <svg class="w-6 h-6 animate-spin hidden" id="magic-spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    </button>
-                </div>
-
-                <!-- Main Canvas -->
-                <div class="lg:col-span-3">
-                    <div class="canvas-workspace relative aspect-video flex items-center justify-center overflow-hidden">
-                        <canvas id="magic-canvas"></canvas>
-                        <div id="canvas-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50">
-                            <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
-                                <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="1.5"/></svg>
-                            </div>
-                            <h2 class="font-display font-bold text-2xl text-slate-400">Awaiting Cyber-Magic...</h2>
-                            <p class="text-slate-600 mt-2">Upload an image to start deconstructing</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 flex items-center justify-between px-4">
-                        <div class="flex items-center gap-4">
-                            <button onclick="zoomCanvas(1.1)" class="p-3 rounded-xl glass-panel border border-white/10 hover:border-cyber-violet transition-all">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
-                            </button>
-                            <button onclick="zoomCanvas(0.9)" class="p-3 rounded-xl glass-panel border border-white/10 hover:border-cyber-violet transition-all">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-width="2"/></svg>
-                            </button>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="downloadResult()" class="px-8 py-3 rounded-xl border border-cyber-neon text-cyber-neon font-bold text-sm hover:bg-cyber-neon hover:text-black transition-all">
-                                Export Project
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Dashboard Section -->
-        <section id="page-dashboard" class="page-section hidden pt-32 pb-20 px-6 min-h-screen">
-            <div class="max-w-5xl mx-auto">
-                <h2 class="font-display text-4xl font-bold mb-10">Extraction <span class="text-cyber-violet">History</span></h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="history-list">
-                    <!-- History items will appear here -->
-                    <div class="glass-panel p-8 rounded-4xl cyber-border flex items-center justify-center h-48 border-dashed">
-                        <p class="text-slate-500 font-medium italic">No magic sessions found.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Mobile Fullscreen Menu -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-white/90 backdrop-blur-2xl flex flex-col items-center justify-center gap-8 p-6 opacity-0 pointer-events-none transition-all duration-500">
+        <!-- Close button removed as per request -->
+        <button onclick="navigateTo('landing')" class="text-3xl font-display font-bold text-slate-soft hover:text-aura-violet transition-all">Home</button>
+        <button onclick="navigateTo('dashboard')" class="text-3xl font-display font-bold text-slate-soft hover:text-aura-violet transition-all">Dashboard</button>
+        <button onclick="navigateTo('insights')" class="text-3xl font-display font-bold text-slate-soft hover:text-aura-violet transition-all">Insights</button>
+        <button onclick="navigateTo('labs')" class="text-3xl font-display font-bold text-slate-soft hover:text-aura-violet transition-all">Labs</button>
+        <button onclick="navigateTo('support')" class="text-3xl font-display font-bold text-slate-soft hover:text-aura-violet transition-all">Support</button>
+        <div class="w-12 h-1 bg-slate-100 rounded-full"></div>
+        <button onclick="navigateTo('scan')" class="px-10 py-5 rounded-2xl bg-gradient-to-r from-aura-violet to-aura-orange text-white font-bold shadow-xl">Start Scanning</button>
     </div>
 
+    <!-- Unique Side Action Dock -->
+    <div class="fixed left-6 top-1/2 -translate-y-1/2 z-50 hidden xl:flex flex-col gap-4">
+        <div class="glass-panel p-3 rounded-2xl flex flex-col gap-4 border border-white/40 shadow-2xl">
+            <button onclick="navigateTo('scan')" class="w-12 h-12 rounded-xl bg-aura-violet text-white flex items-center justify-center hover:scale-110 transition-all shadow-lg" title="Start Scan">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+            </button>
+            <button onclick="navigateTo('dashboard')" class="w-12 h-12 rounded-xl bg-white text-aura-violet flex items-center justify-center hover:bg-aura-violet hover:text-white transition-all shadow-md" title="History">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </button>
+            <div class="w-8 h-[1px] bg-slate-200 mx-auto"></div>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="w-12 h-12 rounded-xl bg-white text-slate-400 flex items-center justify-center hover:text-aura-violet transition-all" title="Back to Top">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg>
+            </button>
+        </div>
+    </div>
+        </header>
+
+        <!-- Mobile Bottom Dock -->
+        <div id="mobile-dock" class="fixed bottom-0 left-0 right-0 z-50 p-4 md:hidden pointer-events-none">
+            <div
+                class="glass-panel rounded-full px-4 py-3 flex items-center justify-around pointer-events-auto max-w-sm mx-auto">
+                <button onclick="navigateTo('landing')"
+                    class="dock-btn flex flex-col items-center gap-1 p-2 rounded-xl transition-all" data-page="landing">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    <span class="text-xs font-medium">Home</span>
+                </button>
+                <button onclick="navigateTo('scan')"
+                    class="dock-btn flex flex-col items-center gap-1 p-2 rounded-xl transition-all" data-page="scan">
+                    <div
+                        class="w-12 h-12 -mt-6 rounded-full bg-gradient-to-br from-aura-violet to-aura-orange flex items-center justify-center shadow-lg shadow-aura-violet/30">
+                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium">Scan</span>
+                </button>
+                <button onclick="navigateTo('dashboard')"
+                    class="dock-btn flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
+                    data-page="dashboard">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span class="text-xs font-medium">History</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pages Container -->
+        <main id="pages-container">
+
+            <!-- Landing Page -->
+            <section id="page-landing"
+                class="page-section relative overflow-x-hidden">
+                <canvas id="hero-canvas"></canvas>
+
+                <!-- Hero Section -->
+                <div class="min-h-screen flex items-center justify-center relative pt-20">
+                    <!-- Gradient Orbs -->
+                    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-aura-violet/10 rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-aura-orange/10 rounded-full blur-3xl"></div>
+                    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-obj-violet/10 rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-obj-orange/10 rounded-full blur-3xl"></div>
+
+                    <!-- Content -->
+                    <div class="relative z-10 max-w-5xl mx-auto px-6 text-center">
+
+                    <h1 class="hero-title font-display font-bold text-slate-deep tracking-tighter mb-8 leading-[0.95]">
+                                <span class="block">MAGIC</span>
+                                <span class="gradient-text block">GRAB.</span>
+                            </h1>
+
+                    <p class="text-lg md:text-xl text-slate-soft max-w-2xl mx-auto mb-12 leading-relaxed">
+                        Deconstruct any image into interactive layers. Move text, extract subjects, and magic-fill backgrounds instantly with AI.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onclick="navigateTo('scan')"
+                            class="group relative px-10 py-5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white font-bold text-xl hover:shadow-2xl hover:shadow-aura-violet/30 transition-all hover:-translate-y-1">
+                            <span class="flex items-center gap-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                                Launch Magic Grab
+                            </span>
+                        </button>
+
+                        <button onclick="navigateTo('dashboard')"
+                            class="gradient-border px-8 py-4 rounded-full font-semibold text-lg text-slate-deep hover:text-aura-violet transition-all">
+                            View History
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-8 mt-24 pt-12 pb-24 border-t border-slate-200/50">
+                        <div class="text-center">
+                            <div class="font-display text-3xl md:text-4xl font-bold text-slate-deep">80+</div>
+                            <div class="text-sm text-slate-soft mt-1">Object Classes</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-display text-3xl md:text-4xl font-bold text-slate-deep">Real-time</div>
+                            <div class="text-sm text-slate-soft mt-1">Detection</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-display text-3xl md:text-4xl font-bold text-slate-deep">100%</div>
+                            <div class="text-sm text-slate-soft mt-1">Private</div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Scroll Indicator -->
+                    <div
+                        class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-light/40">
+                        <span class="text-[10px] uppercase tracking-[0.3em] font-bold">Scroll</span>
+                        <svg class="w-4 h-4 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 5v14M19 12l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+
+
+                <!-- Features Section with Mascot -->
+                <div class="py-32 relative overflow-hidden">
+                    <div class="max-w-6xl mx-auto px-6">
+                        <div class="flex flex-col lg:flex-row items-center gap-16">
+                            <!-- Mascot side -->
+                            <div class="w-full lg:w-1/2 relative">
+                                <div class="absolute inset-0 bg-aura-violet/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+                                <!-- Animated SVG Robot Mascot (True Transparency) -->
+                                <div class="w-full max-w-md mx-auto float-animation">
+                                    <svg viewBox="0 0 200 200" class="w-full h-auto drop-shadow-2xl">
+                                        <!-- Robot Body -->
+                                        <rect x="60" y="80" width="80" height="70" rx="20" fill="url(#robotGradient)" stroke="#8B5CF6" stroke-width="2"/>
+                                        <!-- Robot Head -->
+                                        <rect x="70" y="40" width="60" height="50" rx="15" fill="white" stroke="#8B5CF6" stroke-width="2"/>
+                                        <!-- Face Screen -->
+                                        <rect x="75" y="45" width="50" height="35" rx="10" fill="#1E293B"/>
+                                        <!-- Glowing Eyes -->
+                                        <circle cx="88" cy="62" r="4" fill="#8B5CF6">
+                                            <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                                        </circle>
+                                        <circle cx="112" cy="62" r="4" fill="#8B5CF6">
+                                            <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                                        </circle>
+                                        <!-- Antenna -->
+                                        <line x1="100" y1="40" x2="100" y2="25" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round"/>
+                                        <circle cx="100" cy="22" r="4" fill="#F97316">
+                                            <animate attributeName="r" values="3;5;3" dur="1s" repeatCount="indefinite" />
+                                        </circle>
+                                        <!-- Arms -->
+                                        <path d="M60 100 Q40 100 40 120" stroke="#8B5CF6" stroke-width="6" fill="none" stroke-linecap="round"/>
+                                        <path d="M140 100 Q160 100 160 120" stroke="#8B5CF6" stroke-width="6" fill="none" stroke-linecap="round"/>
+                                        <!-- Legs -->
+                                        <rect x="75" y="150" width="15" height="15" rx="5" fill="#8B5CF6"/>
+                                        <rect x="110" y="150" width="15" height="15" rx="5" fill="#8B5CF6"/>
+                                        
+                                        <defs>
+                                            <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+                                                <stop offset="100%" style="stop-color:#F1F5F9;stop-opacity:1" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Floating Tooltips -->
+                                <div class="absolute top-10 right-0 glass-panel p-4 rounded-2xl shadow-xl animate-bounce" style="animation-delay: 1s;">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
+                                        <span class="text-sm font-medium">99% Accuracy</span>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-10 left-0 glass-panel p-4 rounded-2xl shadow-xl animate-bounce" style="animation-delay: 0.5s;">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-aura-orange flex items-center justify-center text-white">⚡</div>
+                                        <span class="text-sm font-medium">Ultra Fast</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Features side -->
+                            <div class="w-full lg:w-1/2">
+                                <h2 class="font-display text-4xl md:text-5xl font-bold text-slate-deep mb-8">Smart Features for a <span class="gradient-text">Smart World</span></h2>
+                                
+                                <div class="space-y-6">
+                                    <div class="glass-panel p-6 rounded-3xl hover:translate-x-2 transition-transform cursor-default">
+                                        <div class="flex gap-4">
+                                            <div class="w-12 h-12 shrink-0 bg-violet-100 rounded-2xl flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-aura-violet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-deep mb-1">Deep Knowledge</h4>
+                                                <p class="text-sm text-slate-soft">Get concise, 2-sentence Wikipedia summaries for every object you scan instantly.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="glass-panel p-6 rounded-3xl hover:translate-x-2 transition-transform cursor-default">
+                                        <div class="flex gap-4">
+                                            <div class="w-12 h-12 shrink-0 bg-orange-100 rounded-2xl flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-aura-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-deep mb-1">Zero Cost Backend</h4>
+                                                <p class="text-sm text-slate-soft">Optimized for high-performance and zero operational costs using free-tier cloud resources.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass-panel p-6 rounded-3xl hover:translate-x-2 transition-transform cursor-default">
+                                        <div class="flex gap-4">
+                                            <div class="w-12 h-12 shrink-0 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-deep mb-1">Privacy First</h4>
+                                                <p class="text-sm text-slate-soft">Your scans are yours. We prioritize privacy and local processing whenever possible.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tech Showcase Section (Split 2-Column) -->
+                <div class="py-24 bg-gradient-to-br from-aura-violet/5 to-aura-orange/5">
+                    <div class="max-w-6xl mx-auto px-6">
+                        <div class="flex flex-col md:flex-row items-center gap-16">
+                            <!-- Left Column: Visual -->
+                            <div class="w-full md:w-1/2 order-2 md:order-1">
+                                <div class="relative">
+                                    <div class="absolute -inset-4 bg-gradient-to-r from-aura-violet to-aura-orange rounded-3xl blur opacity-20 animate-pulse"></div>
+                                    <div class="glass-panel p-8 rounded-3xl relative overflow-hidden">
+                                        <div class="flex items-center gap-4 mb-6">
+                                            <div class="w-12 h-12 rounded-full bg-aura-violet flex items-center justify-center text-white font-bold">1</div>
+                                            <h4 class="font-display font-semibold text-xl text-slate-deep">Real-time Neural Engine</h4>
+                                        </div>
+                                        <p class="text-slate-soft mb-8 leading-relaxed">Our proprietary model runs at 60FPS on most modern devices, providing an uninterrupted AR experience that feels like magic.</p>
+                                        <div class="flex items-center gap-3">
+                                            <span class="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-bold uppercase tracking-wider">Active</span>
+                                            <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider">Low Latency</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Text -->
+                            <div class="w-full md:w-1/2 order-1 md:order-2">
+                                <span class="text-aura-violet font-bold text-sm uppercase tracking-widest mb-4 block">Advanced Tech</span>
+                                <h2 class="font-display text-4xl md:text-5xl font-bold text-slate-deep mb-6">Built for the <span class="gradient-text">Future of Web</span></h2>
+                                <p class="text-slate-soft text-lg mb-8 leading-relaxed">We leverage TensorFlow.js and Gemini Pro Vision to bring professional-grade object recognition to a simple HTML page. No app store downloads required.</p>
+                                <ul class="space-y-4">
+                                    <li class="flex items-center gap-3 text-slate-deep font-medium">
+                                        <div class="w-5 h-5 rounded-full bg-aura-orange/20 flex items-center justify-center text-aura-orange text-xs font-bold">✓</div>
+                                        Web-First Architecture
+                                    </li>
+                                    <li class="flex items-center gap-3 text-slate-deep font-medium">
+                                        <div class="w-5 h-5 rounded-full bg-aura-orange/20 flex items-center justify-center text-aura-orange text-xs font-bold">✓</div>
+                                        Zero Data Storage Latency
+                                    </li>
+                                    <li class="flex items-center gap-3 text-slate-deep font-medium">
+                                        <div class="w-5 h-5 rounded-full bg-aura-orange/20 flex items-center justify-center text-aura-orange text-xs font-bold">✓</div>
+                                        Cross-Platform Stability
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Redesigned Split FAQ Section -->
+                <div class="flex flex-col lg:flex-row overflow-hidden">
+                    <!-- Left: Header Side -->
+                    <div class="w-full lg:w-2/5 bg-aura-violet/5 py-24 px-12 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200">
+                        <span class="text-aura-violet font-bold text-sm uppercase tracking-widest mb-4 block">Support</span>
+                        <h2 class="font-display text-4xl md:text-5xl font-bold text-slate-deep mb-6 leading-tight">Got <span class="gradient-text">Questions?</span> We have answers.</h2>
+                        <p class="text-slate-soft text-lg leading-relaxed">Can't find what you're looking for? Check our most common queries or reach out to our team.</p>
+                        <div class="mt-10">
+                            <a href="mailto:support@aurascan.com" class="inline-flex items-center gap-2 text-aura-violet font-bold hover:gap-4 transition-all">
+                                Contact Support 
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Right: Questions Side -->
+                    <div class="w-full lg:w-3/5 bg-white py-24 px-12 lg:px-20">
+                        <div class="space-y-12">
+                            <div class="group">
+                                <h4 class="font-display font-bold text-xl text-slate-deep mb-3 group-hover:text-aura-violet transition-colors">Is it really free?</h4>
+                                <p class="text-slate-soft leading-relaxed">Yes! We use open-source models and the free tier of Gemini AI to keep the service accessible to everyone. No credit card required.</p>
+                            </div>
+                            <div class="group">
+                                <h4 class="font-display font-bold text-xl text-slate-deep mb-3 group-hover:text-aura-violet transition-colors">How accurate is the AI?</h4>
+                                <p class="text-slate-soft leading-relaxed">Our Gemini-powered engine has a 99% accuracy rate for common household and tech objects. It gets smarter every day.</p>
+                            </div>
+                            <div class="group">
+                                <h4 class="font-display font-bold text-xl text-slate-deep mb-3 group-hover:text-aura-violet transition-colors">Do you store my images?</h4>
+                                <p class="text-slate-soft leading-relaxed">No. Images are processed in real-time for analysis and are never saved to our servers. Your privacy is our priority.</p>
+                            </div>
+                            <div class="group">
+                                <h4 class="font-display font-bold text-xl text-slate-deep mb-3 group-hover:text-aura-violet transition-colors">Does it work on mobile?</h4>
+                                <p class="text-slate-soft leading-relaxed">Absolutely! Aura Scanner is fully responsive and optimized for Chrome and Safari on all modern mobile devices.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Section -->
+                <footer class="bg-slate-50 text-slate-deep py-20 border-t border-slate-200">
+                    <div class="max-w-6xl mx-auto px-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                            <!-- Brand -->
+                            <div class="col-span-1 md:col-span-2">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-aura-violet to-aura-orange flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3" />
+                                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                                        </svg>
+                                    </div>
+                                    <span class="font-display font-bold text-2xl tracking-tight">AURA<span class="text-aura-orange">SCAN</span></span>
+                                </div>
+                                <p class="text-slate-soft max-w-sm mb-8 leading-relaxed">Empowering users to discover the physical world through the lens of artificial intelligence. High performance meets simple spatial design.</p>
+                                <div class="flex gap-4">
+                                    <a href="#" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center hover:bg-aura-violet hover:text-white transition-all text-slate-deep">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                                    </a>
+                                    <a href="#" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center hover:bg-aura-violet hover:text-white transition-all text-slate-deep">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Links 1 -->
+                            <div>
+                                <h4 class="font-display font-semibold mb-6">Product</h4>
+                                <ul class="space-y-4 text-slate-soft text-sm">
+                                    <li><a href="#" onclick="navigateTo('scan')" class="hover:text-aura-violet transition-colors">Start Scanning</a></li>
+                                    <li><a href="#" onclick="navigateTo('dashboard')" class="hover:text-aura-violet transition-colors">View History</a></li>
+                                    <li><a href="#" class="hover:text-aura-violet transition-colors">Privacy Policy</a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Links 2 -->
+                            <div>
+                                <h4 class="font-display font-semibold mb-6">Company</h4>
+                                <ul class="space-y-4 text-slate-soft text-sm">
+                                    <li><a href="#" class="hover:text-aura-violet transition-colors">About Us</a></li>
+                                    <li><a href="#" class="hover:text-aura-violet transition-colors">Careers</a></li>
+                                    <li><a href="#" class="hover:text-aura-violet transition-colors">Contact</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="pt-12 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <p class="text-slate-soft text-sm">© 2026 Aura Scanner. Made with <span class="text-aura-orange">❤️</span> for the Web.</p>
+                            <div class="flex gap-8 text-slate-soft text-sm">
+                                <a href="#" class="hover:text-aura-violet transition-colors">Terms</a>
+                                <a href="#" class="hover:text-aura-violet transition-colors">Privacy</a>
+                                <a href="#" class="hover:text-aura-violet transition-colors">Cookies</a>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </section>
+
+            <!-- Scanner Page -->
+            <section id="page-scan" class="page-section hidden min-h-screen bg-slate-900 overflow-hidden flex flex-col">
+                <!-- Cyber Workspace Toolbar -->
+                <div class="z-30 px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
+                    <div class="flex items-center gap-6">
+                        <button onclick="navigateTo('landing')" class="text-white/60 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                        </button>
+                        <div class="h-6 w-[1px] bg-white/10"></div>
+                        <h2 class="text-white font-black uppercase tracking-widest text-xs">Magic Workspace v2.0</h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="resetCanvas()" class="px-4 py-2 rounded-xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">Reset</button>
+                        <button onclick="exportCanvas()" class="px-4 py-2 rounded-xl bg-aura-violet text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-aura-violet/20 hover:scale-105 transition-all">Export</button>
+                    </div>
+                </div>
+
+                <!-- Interactive Canvas Area -->
+                <div id="magic-canvas-container" class="relative flex-1 flex items-center justify-center p-8 overflow-hidden">
+                    <!-- Grid Background -->
+                    <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.05)_0%,transparent_100%)] pointer-events-none"></div>
+                    
+                    <!-- Upload Dropzone -->
+                    <div id="drop-zone" class="z-20 w-full max-w-xl aspect-video rounded-[3rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 glass-panel hover:border-aura-violet/50 transition-all cursor-pointer group" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+                        <div class="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white/40 group-hover:text-aura-violet transition-colors">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2.5"/></svg>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-white font-bold text-xl mb-1">Upload flat image</h3>
+                            <p class="text-white/40 text-sm">Drag and drop or click to browse</p>
+                        </div>
+                    </div>
+
+                    <!-- Fabric Canvas Wrapper -->
+                    <div id="canvas-wrapper" class="hidden relative shadow-2xl shadow-black/50 rounded-2xl overflow-hidden border border-white/10">
+                        <canvas id="main-canvas"></canvas>
+                    </div>
+
+                    <!-- Processing Overlay -->
+                    <div id="magic-loader" class="hidden absolute inset-0 z-40 bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center gap-8">
+                        <div class="relative">
+                            <div class="w-24 h-24 rounded-full border-4 border-white/5 border-t-aura-violet animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-aura-violet animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm mb-2">Magic Processing</h3>
+                            <p class="text-white/40 text-xs animate-pulse">Running SAM + OCR + LaMa Pipeline...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Magic Action Dock -->
+                <div id="magic-dock" class="z-30 px-6 py-8 flex items-center justify-center gap-4">
+                    <button id="magic-extract-btn" onclick="triggerMagicExtract()" class="px-12 py-5 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-aura-violet/30 hover:scale-105 active:scale-95 transition-all hidden">
+                        Magic Extract Layers
+                    </button>
+                    <div id="tool-bar" class="hidden flex items-center gap-2 p-2 rounded-2xl bg-white/5 border border-white/10">
+                        <button onclick="setMode('select')" class="tool-btn active p-3 rounded-xl text-white/40 hover:text-white transition-colors" title="Select"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg></button>
+                        <button onclick="setMode('delete')" class="p-3 rounded-xl text-white/40 hover:text-red-400 transition-colors" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Page -->
+            <section id="page-dashboard" class="page-section min-h-screen relative hidden pb-32 md:pb-12">
+                <!-- Background -->
+                <div class="fixed inset-0 bg-gradient-to-br from-alabaster via-white to-slate-50 -z-10"></div>
+                <div class="fixed top-0 right-0 w-1/2 h-1/2 bg-aura-violet/5 rounded-full blur-3xl -z-10"></div>
+
+                <div class="pt-36 md:pt-40 px-4 md:px-8 max-w-7xl mx-auto">
+                    <!-- Header & Actions Bar -->
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 dashboard-header-group">
+                        <div>
+                            <h1 class="font-display text-4xl md:text-5xl font-bold text-slate-deep mb-3">Scan History</h1>
+                            <p class="text-lg text-slate-soft">Your previously detected discoveries</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-deep font-semibold text-sm hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                Export
+                            </button>
+                            <button onclick="clearHistory()" class="px-5 py-2.5 rounded-xl bg-white border border-red-100 text-red-500 font-semibold text-sm hover:bg-red-50 transition-all flex items-center gap-2 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs (Spatial Style) -->
+                    <div class="flex items-center gap-3 mb-10 overflow-x-auto pb-4 scrollbar-hide">
+                        <button class="filter-tab active px-6 py-3 rounded-2xl bg-aura-violet text-white text-sm font-bold shadow-lg shadow-aura-violet/20 transition-all whitespace-nowrap" data-filter="all">All Items</button>
+                        <button class="filter-tab px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-soft text-sm font-bold hover:border-aura-violet hover:text-aura-violet transition-all shadow-sm whitespace-nowrap" data-filter="saved">Saved</button>
+                        <button class="filter-tab px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-soft text-sm font-bold hover:border-aura-violet hover:text-aura-violet transition-all shadow-sm whitespace-nowrap" data-filter="objects">Objects</button>
+                        <button class="filter-tab px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-soft text-sm font-bold hover:border-aura-violet hover:text-aura-violet transition-all shadow-sm whitespace-nowrap" data-filter="tech">Tech</button>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                        <div class="glass-panel rounded-2xl p-5">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-gradient-to-br from-aura-violet/20 to-aura-orange/20 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-aura-violet" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                            </div>
+                            <div class="font-display text-2xl font-bold text-slate-deep" id="total-scans">24</div>
+                            <div class="text-sm text-slate-soft">Total Scans</div>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-5">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
+                            </div>
+                            <div class="font-display text-2xl font-bold text-slate-deep">89%</div>
+                            <div class="text-sm text-slate-soft">Avg Accuracy</div>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-5">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            <div class="font-display text-2xl font-bold text-slate-deep">12</div>
+                            <div class="text-sm text-slate-soft">Saved Items</div>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-5">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </div>
+                            <div class="font-display text-2xl font-bold text-slate-deep">Today</div>
+                            <div class="text-sm text-slate-soft">Last Active</div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Recent Scans -->
+                    <div class="mb-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-display text-xl font-semibold text-slate-deep">Recent Scans</h2>
+                            <button
+                                class="text-sm text-aura-violet hover:text-aura-orange transition-colors font-medium">View
+                                All</button>
+                        </div>
+
+                        <!-- Masonry Grid -->
+                        <div id="masonry-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <!-- Cards will be injected here with uniform aspect ratio -->
+                        </div>
+                    </div>
+
+                    <!-- Section: Saved Objects -->
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-display text-xl font-semibold text-slate-deep">Saved Objects</h2>
+                            <button
+                                class="text-sm text-aura-violet hover:text-aura-orange transition-colors font-medium">Manage</button>
+                        </div>
+
+                        <div id="saved-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Saved items will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Insights Page -->
+            <section id="page-insights" class="page-section min-h-screen relative hidden pt-40 md:pt-48 pb-24 px-6">
+                <div class="fixed inset-0 bg-gradient-to-br from-alabaster via-white to-slate-50 -z-10"></div>
+                <div class="max-w-6xl mx-auto">
+                    <div class="mb-12">
+                        <span class="text-aura-violet font-bold text-sm uppercase tracking-widest mb-2 block">Analytics</span>
+                        <h1 class="font-display text-4xl md:text-5xl font-bold text-slate-deep mb-4">OBJ <span class="gradient-text">Insights</span></h1>
+                        <p class="text-slate-soft text-lg">Deep dive into your scanning behavior and AI performance.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Chart Card -->
+                        <div class="lg:col-span-2 glass-panel p-10 rounded-[3rem] border border-white/60 shadow-xl overflow-hidden relative">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-aura-violet to-aura-orange"></div>
+                            <div class="flex items-center justify-between mb-10">
+                                <h3 class="font-bold text-slate-deep text-xl">Activity Trends</h3>
+                                <div class="flex gap-2">
+                                    <button class="px-3 py-1 rounded-lg bg-aura-violet/10 text-aura-violet text-[10px] font-bold">WEEK</button>
+                                    <button class="px-3 py-1 rounded-lg text-slate-400 text-[10px] font-bold">MONTH</button>
+                                </div>
+                            </div>
+                            <div class="h-64 flex items-end gap-3 px-4">
+                                <div class="flex-1 bg-aura-violet/10 rounded-t-2xl h-[40%] hover:h-[50%] transition-all duration-500 cursor-pointer relative group">
+                                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">12 Scans</div>
+                                </div>
+                                <div class="flex-1 bg-aura-violet/20 rounded-t-2xl h-[65%] hover:h-[75%] transition-all duration-500 cursor-pointer relative group"></div>
+                                <div class="flex-1 bg-aura-violet/30 rounded-t-2xl h-[85%] hover:h-[95%] transition-all duration-500 cursor-pointer relative group"></div>
+                                <div class="flex-1 bg-aura-violet/20 rounded-t-2xl h-[50%] hover:h-[60%] transition-all duration-500 cursor-pointer relative group"></div>
+                                <div class="flex-1 bg-aura-violet/40 rounded-t-2xl h-[95%] hover:h-[100%] transition-all duration-500 cursor-pointer relative group"></div>
+                                <div class="flex-1 bg-aura-violet/20 rounded-t-2xl h-[70%] hover:h-[80%] transition-all duration-500 cursor-pointer relative group"></div>
+                                <div class="flex-1 bg-aura-violet/10 rounded-t-2xl h-[35%] hover:h-[45%] transition-all duration-500 cursor-pointer relative group"></div>
+                            </div>
+                            <div class="flex justify-between mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
+                                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                            </div>
+                        </div>
+
+                        <!-- Precision Card -->
+                        <div class="space-y-6">
+                            <div class="glass-panel p-8 rounded-[2.5rem] border border-white/60 shadow-xl text-center">
+                                <p class="text-slate-soft text-sm mb-2 font-bold uppercase tracking-tight">AI Precision</p>
+                                <div class="text-5xl font-display font-bold text-slate-deep mb-2">98.4<span class="text-aura-violet text-2xl">%</span></div>
+                                <p class="text-xs text-green-500 font-bold tracking-widest">▲ 2.4% GROWTH</p>
+                            </div>
+                            <div class="glass-panel p-8 rounded-[2.5rem] border border-white/60 shadow-xl">
+                                <h4 class="font-bold text-slate-deep mb-4">Object Diversity</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-xs font-bold mb-1"><span>TECH</span><span>65%</span></div>
+                                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="w-[65%] h-full bg-aura-violet"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-bold mb-1"><span>HOME</span><span>25%</span></div>
+                                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="w-[25%] h-full bg-aura-orange"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Labs Page -->
+            <section id="page-labs" class="page-section min-h-screen relative hidden pt-40 md:pt-48 pb-24 px-6">
+                <div class="fixed inset-0 bg-slate-50 -z-10"></div>
+                <div class="max-w-6xl mx-auto">
+                    <div class="text-center mb-16">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-slate-100 text-aura-violet text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+                            <span class="w-2 h-2 rounded-full bg-aura-violet animate-pulse"></span>
+                            Aura Experimental Zone
+                        </div>
+                        <h1 class="font-display text-5xl md:text-7xl font-bold text-slate-deep mb-6">OBJ <span class="gradient-text">Labs</span></h1>
+                        <p class="text-slate-soft text-lg max-w-2xl mx-auto leading-relaxed">Early access to futuristic AR features. Stable performance is not guaranteed, but the future is.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <!-- Lab Item 1 -->
+                        <div class="glass-panel p-12 rounded-[3.5rem] border border-white/60 shadow-2xl relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
+                            <div class="absolute -top-10 -right-10 w-40 h-40 bg-aura-violet/5 rounded-full blur-3xl group-hover:bg-aura-violet/10 transition-colors"></div>
+                            <div class="relative z-10">
+                                <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-8 shadow-xl">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                </div>
+                                <h3 class="text-3xl font-display font-bold text-slate-deep mb-4">3D Mesh Export</h3>
+                                <p class="text-slate-soft text-lg leading-relaxed mb-10">Transform single-view camera scans into raw 3D mesh data (OBJ/STL) using depth estimation APIs.</p>
+                                <button class="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-aura-violet transition-all shadow-lg">Try Prototype</button>
+                            </div>
+                        </div>
+                        <!-- Lab Item 2 -->
+                        <div class="glass-panel p-12 rounded-[3.5rem] border border-white/60 shadow-2xl relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
+                            <div class="absolute -top-10 -right-10 w-40 h-40 bg-aura-orange/5 rounded-full blur-3xl group-hover:bg-aura-orange/10 transition-colors"></div>
+                            <div class="relative z-10">
+                                <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-8 shadow-xl">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2V4zm-2 2a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2V6zm-2 2a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2V8z"/></svg>
+                                </div>
+                                <h3 class="text-3xl font-display font-bold text-slate-deep mb-4">Neural Upscaling</h3>
+                                <p class="text-slate-soft text-lg leading-relaxed mb-10">Enhance low-light scan quality using real-time GAN (Generative Adversarial Network) upscaling.</p>
+                                <button class="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-aura-orange transition-all shadow-lg">Activate GAN</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </section>
+
+            <!-- Support Page -->
+            <section id="page-support" class="page-section min-h-screen relative hidden pt-40 md:pt-48 pb-24 px-6">
+                <div class="fixed inset-0 bg-gradient-to-tr from-white via-alabaster to-violet-50/30 -z-10"></div>
+                <div class="max-w-6xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                        <!-- Left: Content -->
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-widest mb-6">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                System Operational
+                            </div>
+                            <h1 class="font-display text-5xl md:text-6xl font-bold text-slate-deep mb-8">How can we <span class="gradient-text">help?</span></h1>
+                            <p class="text-slate-soft text-lg mb-12 leading-relaxed">Our team and AI models are standing by to ensure your scanning experience is flawless. Reach out with any questions or technical issues.</p>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="glass-panel p-6 rounded-3xl border border-white/60">
+                                    <div class="w-10 h-10 rounded-xl bg-aura-violet/10 text-aura-violet flex items-center justify-center mb-4">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                    </div>
+                                    <h4 class="font-bold text-slate-deep mb-1">Live Chat</h4>
+                                    <p class="text-xs text-slate-400">Response time: ~5 mins</p>
+                                </div>
+                                <div class="glass-panel p-6 rounded-3xl border border-white/60">
+                                    <div class="w-10 h-10 rounded-xl bg-aura-orange/10 text-aura-orange flex items-center justify-center mb-4">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    </div>
+                                    <h4 class="font-bold text-slate-deep mb-1">Email Support</h4>
+                                    <p class="text-xs text-slate-400">support@aurascan.ai</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Form -->
+                        <div class="glass-panel p-10 rounded-[3rem] border border-white shadow-2xl relative">
+                            <div class="absolute -top-6 -right-6 w-24 h-24 bg-aura-violet/10 rounded-full blur-2xl"></div>
+                            <form class="space-y-6" onsubmit="event.preventDefault(); showToast('Message Sent', 'We will get back to you shortly!');">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Your Name</label>
+                                    <input type="text" placeholder="John Doe" class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-deep focus:outline-none focus:border-aura-violet transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+                                    <input type="email" placeholder="john@example.com" class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-deep focus:outline-none focus:border-aura-violet transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Message</label>
+                                    <textarea rows="4" placeholder="How can we help you today?" class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-deep focus:outline-none focus:border-aura-violet transition-all resize-none"></textarea>
+                                </div>
+                                <button type="submit" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-aura-violet transition-all shadow-xl hover:-translate-y-1">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed top-32 right-4 z-50 glass-panel rounded-2xl px-5 py-4 flex items-center gap-3 transform translate-x-full opacity-0 transition-all duration-300">
+        <div id="toast-icon" class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+            <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+            </svg>
+        </div>
+        <div>
+            <p id="toast-title" class="font-medium text-slate-deep">Success</p>
+            <p id="toast-message" class="text-sm text-slate-soft">Action completed</p>
+        </div>
+    </div>
+
+    <!-- Three.js Hero Scene -->
+    <script type="module">
+        import * as THREE from 'three';
+
+        // Hero Scene Setup
+        const canvas = document.getElementById('hero-canvas');
+        if (canvas) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Create morphing sphere with custom shader
+            const sphereGeometry = new THREE.IcosahedronGeometry(1.5, 64);
+
+            const vertexShader = `
+                uniform float uTime;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                
+                //	Simplex 3D Noise 
+                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+                vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+                
+                float snoise(vec3 v){ 
+                    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                    vec3 i  = floor(v + dot(v, C.yyy));
+                    vec3 x0 = v - i + dot(i, C.xxx);
+                    vec3 g = step(x0.yzx, x0.xyz);
+                    vec3 l = 1.0 - g;
+                    vec3 i1 = min(g.xyz, l.zxy);
+                    vec3 i2 = max(g.xyz, l.zxy);
+                    vec3 x1 = x0 - i1 + C.xxx;
+                    vec3 x2 = x0 - i2 + C.yyy;
+                    vec3 x3 = x0 - D.yyy;
+                    i = mod(i, 289.0);
+                    vec4 p = permute(permute(permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                        + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                        + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                    float n_ = 0.142857142857;
+                    vec3 ns = n_ * D.wyz - D.xzx;
+                    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                    vec4 x_ = floor(j * ns.z);
+                    vec4 y_ = floor(j - 7.0 * x_);
+                    vec4 x = x_ *ns.x + ns.yyyy;
+                    vec4 y = y_ *ns.x + ns.yyyy;
+                    vec4 h = 1.0 - abs(x) - abs(y);
+                    vec4 b0 = vec4(x.xy, y.xy);
+                    vec4 b1 = vec4(x.zw, y.zw);
+                    vec4 s0 = floor(b0)*2.0 + 1.0;
+                    vec4 s1 = floor(b1)*2.0 + 1.0;
+                    vec4 sh = -step(h, vec4(0.0));
+                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                    vec3 p0 = vec3(a0.xy,h.x);
+                    vec3 p1 = vec3(a0.zw,h.y);
+                    vec3 p2 = vec3(a1.xy,h.z);
+                    vec3 p3 = vec3(a1.zw,h.w);
+                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                    p0 *= norm.x;
+                    p1 *= norm.y;
+                    p2 *= norm.z;
+                    p3 *= norm.w;
+                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                    m = m * m;
+                    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                }
+                
+                void main() {
+                    vNormal = normal;
+                    vPosition = position;
+                    
+                    vec3 pos = position;
+                    float noise = snoise(pos * 1.5 + uTime * 0.3) * 0.15;
+                    pos += normal * noise;
+                    
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `;
+
+            const fragmentShader = `
+                uniform float uTime;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                
+                void main() {
+                    vec3 color1 = vec3(0.545, 0.361, 0.965); // Violet
+                    vec3 color2 = vec3(0.976, 0.451, 0.086); // Orange
+                    
+                    float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                    float gradient = (vPosition.y + 1.5) / 3.0;
+                    
+                    vec3 color = mix(color1, color2, gradient + sin(uTime * 0.5) * 0.2);
+                    color = mix(color, vec3(1.0), fresnel * 0.5);
+                    
+                    float alpha = 0.6 + fresnel * 0.3;
+                    
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `;
+
+            const material = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms: {
+                    uTime: { value: 0 }
+                },
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+
+            const sphere = new THREE.Mesh(sphereGeometry, material);
+            scene.add(sphere);
+
+            // Add ambient particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 200;
+            const positions = new Float32Array(particlesCount * 3);
+
+            for (let i = 0; i < particlesCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 10;
+                positions[i + 1] = (Math.random() - 0.5) * 10;
+                positions[i + 2] = (Math.random() - 0.5) * 10;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.02,
+                color: 0x8B5CF6,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+
+            camera.position.z = 4;
+
+            // Mouse interaction
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+
+                material.uniforms.uTime.value += 0.01;
+
+                sphere.rotation.x += 0.002;
+                sphere.rotation.y += 0.003;
+
+                sphere.position.x = mouseX * 0.2;
+                sphere.position.y = -mouseY * 0.2;
+
+                particles.rotation.y += 0.0005;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    </script>
+
+    <!-- Main Application Script -->
     <script>
+        // =====================
+        // Mascot Interaction
+        // =====================
+        document.addEventListener('mousemove', (e) => {
+            const mascot = document.querySelector('.float-animation');
+            if (mascot && currentPage === 'landing') {
+                const x = (window.innerWidth / 2 - e.clientX) / 50;
+                const y = (window.innerHeight / 2 - e.clientY) / 50;
+                mascot.style.transform = `translate(${x}px, ${y}px)`;
+            }
+        });
+
         // =====================
         // State Management
         // =====================
-        let currentPage = 'home';
-        let canvas = null;
-        let originalImage = null;
-        let layersData = null;
-        
+        let currentPage = 'landing';
+        let model = null;
+        let videoStream = null;
+        let isScanning = false;
+        let flashOn = false;
+        let currentDetections = [];
+        let scanHistory = [];
+
+        // Mock scan data
+        const mockScanData = [
+            { id: 1, label: 'Person', confidence: 0.97, timestamp: new Date(Date.now() - 3600000), category: 'people', saved: true, image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop' },
+            { id: 2, label: 'Laptop', confidence: 0.94, timestamp: new Date(Date.now() - 7200000), category: 'objects', saved: false, image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop' },
+            { id: 3, label: 'Dog', confidence: 0.89, timestamp: new Date(Date.now() - 10800000), category: 'animals', saved: true, image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop' },
+            { id: 4, label: 'Cup', confidence: 0.92, timestamp: new Date(Date.now() - 14400000), category: 'objects', saved: false, image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400&h=350&fit=crop' },
+            { id: 5, label: 'Cell Phone', confidence: 0.96, timestamp: new Date(Date.now() - 18000000), category: 'objects', saved: true, image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=450&fit=crop' },
+            { id: 6, label: 'Cat', confidence: 0.88, timestamp: new Date(Date.now() - 21600000), category: 'animals', saved: false, image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=380&fit=crop' },
+            { id: 7, label: 'Book', confidence: 0.91, timestamp: new Date(Date.now() - 25200000), category: 'objects', saved: false, image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=320&fit=crop' },
+            { id: 8, label: 'Bottle', confidence: 0.93, timestamp: new Date(Date.now() - 28800000), category: 'objects', saved: true, image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=500&fit=crop' },
+            { id: 9, label: 'Chair', confidence: 0.87, timestamp: new Date(Date.now() - 32400000), category: 'objects', saved: false, image: 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop' },
+            { id: 10, label: 'Bird', confidence: 0.85, timestamp: new Date(Date.now() - 36000000), category: 'animals', saved: false, image: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=400&h=350&fit=crop' },
+        ];
+
+        // Object descriptions for info cards
+        const objectDescriptions = {
+            'person': 'A human being detected in frame. Real-time detection enables various applications from security to interaction design.',
+            'laptop': 'A portable personal computer with a clamshell form factor. Modern laptops integrate displays, keyboards, and trackpads.',
+            'dog': 'A domesticated carnivorous mammal. Dogs are known for their loyalty and are one of the most popular pets worldwide.',
+            'cat': 'A small domesticated carnivorous mammal. Cats are known for their independence and agility.',
+            'cup': 'A small container typically used for drinking beverages. Can be made from various materials including ceramic, glass, or plastic.',
+            'cell phone': 'A portable telephone that can make and receive calls over a radio frequency link. Modern smartphones are powerful computing devices.',
+            'book': 'A set of written, printed, or blank pages bound together. Books remain one of humanity\'s primary methods of preserving knowledge.',
+            'bottle': 'A container with a narrow neck used for storing liquids. Commonly made from glass or plastic.',
+            'chair': 'A piece of furniture designed for sitting. Chairs come in various designs for different purposes and settings.',
+            'bird': 'A warm-blooded vertebrate distinguished by having feathers, wings, and a beak.',
+            'default': 'An object has been detected in your camera view. AI-powered recognition identifies objects in real-time.'
+        };
+
+        // =====================
+        // Navigation
+        // =====================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const menuPath = document.getElementById('menu-path');
+            const isVisible = !menu.classList.contains('opacity-0');
+            
+            if (isVisible) {
+                // Hide menu
+                menu.classList.add('opacity-0', 'pointer-events-none');
+                menuPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16'); // Hamburger
+            } else {
+                // Show menu
+                menu.classList.remove('opacity-0', 'pointer-events-none');
+                menuPath.setAttribute('d', 'M6 18L18 6M6 6l12 12'); // Close X
+            }
+        }
+
+        function navigateTo(page) {
+            if (currentPage === page) return;
+
+            // Update Header Color for Scan Mode
+            const header = document.getElementById('nav-header');
+            if (page === 'scan') {
+                header.classList.add('is-scan-mode');
+            } else {
+                header.classList.remove('is-scan-mode');
+            }
+
+            const prevPage = document.getElementById(`page-${currentPage}`);
+            const nextPage = document.getElementById(`page-${page}`);
+
+            if (currentPage === page) return;
+
+            // Close mobile menu and reset icon
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.add('opacity-0', 'pointer-events-none');
+            const menuPath = document.getElementById('menu-path');
+            if (menuPath) menuPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+
+            // Start camera logic
+            if (page === 'scan') {
+                startCamera(); // Auto-start camera
+            } else if (currentPage === 'scan') {
+                // Leaving scan page
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                    videoStream = null;
+                }
+                isDetectionActive = false;
+            }
+
+            // Animate out
+            if (prevPage) {
+                prevPage.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    prevPage.classList.add('hidden');
+                    prevPage.classList.remove('opacity-0', 'scale-95');
+                }, 300);
+            }
+
+            // Animate in
+            setTimeout(() => {
+                if (nextPage) {
+                    nextPage.classList.remove('hidden');
+                    nextPage.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        nextPage.classList.add('page-enter-active');
+                        nextPage.classList.remove('opacity-0', 'scale-95');
+                    }, 50);
+                }
+
+                currentPage = page;
+                updateNavigation();
+
+                if (page === 'scan') {
+                    // Start everything automatically
+                    setTimeout(() => {
+                        if (!isDetectionActive) performScan();
+                    }, 1000);
+                }
+                if (page === 'dashboard') renderDashboard();
+                
+                // On mobile, hide navigation bar background when scanning
+                const nav = document.querySelector('nav');
+                if (page === 'scan' && window.innerWidth < 768) {
+                    nav.classList.add('opacity-0', 'pointer-events-none');
+                } else {
+                    nav.classList.remove('opacity-0', 'pointer-events-none');
+                }
+
+                // Scroll to top on page change
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 200);
+        }
+
+        function updateNavigation() {
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('text-slate-deep', 'bg-white/50');
+                link.classList.add('text-slate-soft');
+                if (link.dataset.page === currentPage) {
+                    link.classList.add('text-slate-deep', 'bg-white/50');
+                    link.classList.remove('text-slate-soft');
+                }
+            });
+
+            // Update dock buttons
+            document.querySelectorAll('.dock-btn').forEach(btn => {
+                btn.classList.remove('text-aura-violet', 'bg-aura-violet/10');
+                btn.classList.add('text-slate-soft');
+                if (btn.dataset.page === currentPage) {
+                    btn.classList.add('text-aura-violet', 'bg-aura-violet/10');
+                    btn.classList.remove('text-slate-soft');
+                }
+            });
+        }
+
+        // =====================
+        // Scanner Functions
+        // =====================
+        async function startCamera() {
+            const video = document.getElementById('camera-feed');
+            const overlay = document.getElementById('camera-init-overlay');
+
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                video.srcObject = videoStream;
+                // Load TensorFlow model
+                if (!model) {
+                    placeholder.classList.remove('hidden');
+                    placeholder.innerHTML = `
+                        <div class="text-center">
+                            <div class="spinner mx-auto mb-4"></div>
+                            <p class="text-slate-soft font-medium">Loading AI Model...</p>
+                        </div>
+                    `;
+
+                    model = await cocoSsd.load();
+                    placeholder.classList.add('hidden');
+                }
+
+                // Start detection loop
+                startDetection();
+
+            } catch (error) {
+                console.error('Camera access denied:', error);
+                placeholder.innerHTML = `
+                    <div class="text-center max-w-md mx-auto px-6">
+                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-display font-semibold text-lg text-slate-deep mb-2">Camera Access Required</h3>
+                        <p class="text-slate-soft mb-4">Please grant camera permissions to use the AR scanner.</p>
+                        <button onclick="initializeScanner()" class="px-6 py-3 rounded-full bg-gradient-to-r from-aura-violet to-aura-orange text-white font-medium hover:shadow-lg transition-all">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function startDetection() {
+            const video = document.getElementById('camera-feed');
+            const overlaysContainer = document.getElementById('ar-overlays');
+
+            if (!model || !video.videoWidth) {
+                requestAnimationFrame(startDetection);
+                return;
+            }
+
+            // Run detection
+            const predictions = await model.detect(video);
+            currentDetections = predictions;
+
+            // Update detection count
+            document.querySelector('#detection-count span').textContent = predictions.length;
+
+            // Render overlays
+            renderAROverlays(predictions, video, overlaysContainer);
+
+            // Continue loop if scanning
+            if (currentPage === 'scan') {
+                requestAnimationFrame(startDetection);
+            }
+        }
+
+        function renderAROverlays(predictions, video, container) {
+            const videoRect = video.getBoundingClientRect();
+            const scaleX = videoRect.width / video.videoWidth;
+            const scaleY = videoRect.height / video.videoHeight;
+
+            container.innerHTML = predictions.map((pred, index) => {
+                const [x, y, width, height] = pred.bbox;
+                const scaledX = x * scaleX;
+                const scaledY = y * scaleY;
+                const scaledWidth = width * scaleX;
+                const scaledHeight = height * scaleY;
+
+                // Ensure coordinates are within bounds
+                const clampedX = Math.max(0, Math.min(scaledX, window.innerWidth - scaledWidth));
+                const clampedY = Math.max(0, Math.min(scaledY, window.innerHeight - scaledHeight));
+
+                const isAIPending = isDetectionActive && index === 0; // Highlight the primary object being analyzed by AI
+
+                return `
+                    <div class="absolute transition-all duration-300 ease-out" 
+                         style="left: ${clampedX}px; top: ${clampedY}px; width: ${scaledWidth}px; height: ${scaledHeight}px;"
+                         onclick="showObjectInfo('${pred.class}', ${pred.score})">
+                        
+                        <!-- Premium AR Corner Brackets with Glow -->
+                        <div class="absolute inset-0 border-2 border-transparent group">
+                            <div class="ar-corner ar-corner-tl !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-tr !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-bl !border-aura-violet !w-6 !h-6"></div>
+                            <div class="ar-corner ar-corner-br !border-aura-violet !w-6 !h-6"></div>
+                            
+                            <!-- Animated Scanning Beam if AI is active on this object -->
+                            ${isAIPending ? '<div class="absolute inset-0 bg-gradient-to-b from-aura-violet/20 to-transparent h-1/2 scanning-line"></div>' : ''}
+                        </div>
+                        
+                        <!-- Floating Label Tag -->
+                        <div class="absolute -top-12 left-0 flex items-center gap-2 px-3 py-2 rounded-xl glass-panel shadow-xl border border-white/40">
+                            <div class="w-2 h-2 rounded-full ${isAIPending ? 'bg-aura-orange animate-pulse' : 'bg-green-500'}"></div>
+                            <span class="text-[10px] font-black text-slate-deep uppercase tracking-widest">
+                                ${pred.class} ${Math.round(pred.score * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showObjectInfo(label, confidence, summary = null) {
+            const infoCard = document.getElementById('info-card');
+            const title = document.getElementById('info-title');
+            const conf = document.getElementById('info-confidence');
+            const desc = document.getElementById('info-description');
+
+            title.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+            conf.textContent = `${Math.round(confidence * 100)}% Match`;
+            
+            // Use summary from API if available, otherwise fallback to local mock
+            desc.textContent = summary || (objectDescriptions[label.toLowerCase()] || objectDescriptions['default']);
+
+            infoCard.classList.remove('hidden');
+            setTimeout(() => infoCard.classList.add('active'), 50);
+        }
+
+        function hideInfoCard() {
+            const infoCard = document.getElementById('info-card');
+            const desc = document.getElementById('info-description');
+            const options = document.getElementById('info-options');
+            const btn = document.getElementById('info-dropdown-btn');
+
+            infoCard.classList.remove('active');
+            // Reset dropdown state
+            desc.style.maxHeight = '0';
+            desc.style.opacity = '0';
+            desc.style.marginBottom = '0';
+            options.style.height = '0';
+            options.style.opacity = '0';
+            options.style.marginTop = '0';
+            if (btn) btn.style.transform = 'rotate(0deg)';
+
+            setTimeout(() => infoCard.classList.add('hidden'), 700);
+        }
+
+        function toggleInfoDropdown() {
+            const panel = document.getElementById('info-content-panel');
+            const btn = document.getElementById('info-dropdown-btn');
+            const isExpanded = panel.style.maxHeight !== '0px' && panel.style.maxHeight !== '';
+
+            if (isExpanded) {
+                panel.style.maxHeight = '0';
+                panel.style.opacity = '0';
+                btn.style.transform = 'rotate(0deg)';
+            } else {
+                panel.style.maxHeight = '500px';
+                panel.style.opacity = '1';
+                btn.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        function searchQuery() {
+            const title = document.getElementById('info-title').textContent;
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}`, '_blank');
+        }
+
+        let isDetectionActive = false;
+
+        // =====================
+// =====================
+        // AI API Integration
+        // =====================
+        // Determine API URL (Local vs Vercel)
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:8000' 
-            : window.location.origin;
-
-        // Initialize App
-        window.addEventListener('load', () => {
-            initCanvas();
-            navigateTo('home');
-        });
-
-        function navigateTo(pageId) {
-            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            currentPage = pageId;
-            
-            // Re-render canvas if entering magic page
-            if (pageId === 'magic' && canvas) {
-                resizeCanvas();
-            }
-        }
+            : window.location.origin; // On Vercel, the API is on the same domain
 
         // =====================
-        // Canvas Engine (Fabric.js)
+        // MAGIC GRAB WORKSPACE
         // =====================
-        function initCanvas() {
-            const canvasEl = document.getElementById('magic-canvas');
-            canvas = new fabric.Canvas('magic-canvas', {
+        let canvas;
+        let selectedFile;
+        let activeMode = 'select';
+
+        function initMagicCanvas() {
+            if (canvas) return;
+            canvas = new fabric.Canvas('main-canvas', {
                 width: 800,
-                height: 500,
-                backgroundColor: 'transparent',
-                preserveObjectStacking: true
+                height: 600,
+                backgroundColor: 'transparent'
             });
+
+            // Handle object selection events
+            canvas.on('selection:created', () => updateToolbar(true));
+            canvas.on('selection:cleared', () => updateToolbar(false));
             
-            fabric.Object.prototype.transparentCorners = false;
-            fabric.Object.prototype.cornerColor = '#8B5CF6';
-            fabric.Object.prototype.cornerStyle = 'circle';
-            fabric.Object.prototype.cornerStrokeColor = '#FFFFFF';
-            fabric.Object.prototype.cornerSize = 10;
+            // Delete key support
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    const activeObjects = canvas.getActiveObjects();
+                    if (activeObjects.length) {
+                        canvas.discardActiveObject();
+                        canvas.remove(...activeObjects);
+                    }
+                }
+            });
         }
 
-        function resizeCanvas() {
-            const container = document.querySelector('.canvas-workspace');
-            if (container && canvas) {
-                canvas.setWidth(container.clientWidth);
-                canvas.setHeight(container.clientHeight);
-                canvas.renderAll();
-            }
-        }
-
-        // =====================
-        // Image Processing
-        // =====================
-        function handleImageUpload(event) {
+        function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
+            selectedFile = file;
 
             const reader = new FileReader();
-            reader.onload = (e) => {
-                originalImage = e.target.result;
-                document.getElementById('canvas-placeholder').classList.add('hidden');
-                document.getElementById('magic-btn').classList.remove('hidden');
-                
-                // Clear and show preview on canvas
-                canvas.clear();
-                fabric.Image.fromURL(originalImage, (img) => {
-                    const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.8;
-                    img.scale(scale);
-                    img.center();
-                    img.selectable = false;
+            reader.onload = function(f) {
+                const data = f.target.result;
+                fabric.Image.fromURL(data, function(img) {
+                    // Reset and Setup Canvas
+                    initMagicCanvas();
+                    canvas.clear();
+                    
+                    const container = document.getElementById('magic-canvas-container');
+                    const maxWidth = container.clientWidth * 0.9;
+                    const maxHeight = container.clientHeight * 0.9;
+                    
+                    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+                    img.scale(ratio);
+                    
+                    canvas.setDimensions({ 
+                        width: img.width * ratio, 
+                        height: img.height * ratio 
+                    });
+
+                    img.set({
+                        left: 0,
+                        top: 0,
+                        selectable: true,
+                        evented: true,
+                        name: 'original_flat'
+                    });
+
                     canvas.add(img);
+                    canvas.centerObject(img);
+                    canvas.renderAll();
+
+                    // Update UI
+                    document.getElementById('drop-zone').classList.add('hidden');
+                    document.getElementById('canvas-wrapper').classList.remove('hidden');
+                    document.getElementById('magic-extract-btn').classList.remove('hidden');
+                    document.getElementById('tool-bar').classList.remove('hidden');
                 });
             };
             reader.readAsDataURL(file);
         }
 
-        async function startMagicExtraction() {
-            if (!originalImage) return;
+        async function triggerMagicExtract() {
+            if (!selectedFile) return;
 
-            const btn = document.getElementById('magic-btn');
-            const spinner = document.getElementById('magic-spinner');
+            const loader = document.getElementById('magic-loader');
+            const extractBtn = document.getElementById('magic-extract-btn');
             
-            btn.disabled = true;
-            spinner.classList.remove('hidden');
-            btn.querySelector('span').textContent = "EXTRACTING...";
+            loader.classList.remove('hidden');
+            extractBtn.disabled = true;
 
-            const fileInput = document.getElementById('image-upload');
-            const file = fileInput.files[0];
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('file', selectedFile);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/magic/extract`, {
@@ -331,97 +1883,347 @@
                 if (!response.ok) throw new Error("Magic extraction failed.");
 
                 const result = await response.json();
-                renderMagicLayers(result.layers);
+                renderMagicLayers(result);
             } catch (err) {
                 console.error("Magic Error:", err);
-                alert("Magic failed: " + err.message);
+                alert("Magic Grab Failed: " + err.message);
             } finally {
-                btn.disabled = false;
-                spinner.classList.add('hidden');
-                btn.querySelector('span').textContent = "MAGIC GRAB";
+                loader.classList.add('hidden');
+                extractBtn.disabled = false;
+                extractBtn.classList.add('hidden'); // Hide after extraction
             }
         }
 
-        function renderMagicLayers(data) {
-            canvas.clear();
-            
-            // 1. Render Background (Locked)
-            fabric.Image.fromURL(originalImage, (img) => {
-                img.set({
-                    left: canvas.width / 2,
-                    top: canvas.height / 2,
-                    originX: 'center',
-                    originY: 'center',
-                    opacity: 0.5, // Background dimmed
-                    selectable: false,
-                    evented: false
-                });
-                const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.8;
-                img.scale(scale);
-                canvas.add(img);
-                canvas.sendToBack(img);
-            });
+        function renderMagicLayers(result) {
+            // 1. Update Background (Inpainted)
+            const bgImg = canvas.getObjects().find(o => o.name === 'original_flat');
+            if (bgImg) {
+                // In a real scenario, we would replace this with the inpainted BG URL
+                // For now, we'll lower its opacity to highlight the layers
+                bgImg.set({ opacity: 0.5, selectable: false });
+            }
 
-            // 2. Render Objects as separate interactive layers
-            data.objects.forEach(obj => {
-                // In a real app, this would be a cropped transparent PNG
-                // For demo, we use the original image with a clip mask or just a label card
-                const rect = new fabric.Rect({
-                    left: (obj.bbox[1] / 100) * canvas.width,
-                    top: (obj.bbox[0] / 100) * canvas.height,
-                    width: (obj.bbox[2] / 100) * canvas.width,
-                    height: (obj.bbox[3] / 100) * canvas.height,
-                    fill: 'rgba(139, 92, 246, 0.2)',
-                    stroke: '#8B5CF6',
-                    strokeWidth: 2,
-                    rx: 10, ry: 10
-                });
-                
-                const text = new fabric.Text(obj.label, {
-                    fontSize: 14,
-                    fill: '#FFF',
-                    left: rect.left + 5,
-                    top: rect.top + 5,
-                    fontFamily: 'Inter'
-                });
-                
-                const group = new fabric.Group([rect, text], {
-                    hasRotatingPoint: true,
-                    cornerStyle: 'circle'
-                });
-                canvas.add(group);
-            });
-
-            // 3. Render Text layers
-            data.text_layers.forEach(txt => {
+            // 2. Render Text Layers (Editable)
+            result.layers.text.forEach(txt => {
                 const textObj = new fabric.IText(txt.text, {
-                    left: (txt.bbox[1] / 100) * canvas.width,
-                    top: (txt.bbox[0] / 100) * canvas.height,
-                    fontSize: txt.fontSize || 24,
-                    fill: '#D946EF',
-                    fontFamily: 'Space Grotesk',
-                    fontWeight: 'bold'
+                    left: txt.x,
+                    top: txt.y,
+                    fontSize: txt.fontSize || 30,
+                    fontFamily: txt.fontFamily || 'Inter',
+                    fill: '#ffffff',
+                    shadow: '0 5px 15px rgba(0,0,0,0.3)',
+                    cornerColor: '#8B5CF6',
+                    cornerStyle: 'circle'
                 });
                 canvas.add(textObj);
             });
 
-            canvas.renderAll();
-        }
+            // 3. Render Object Layers (Isolated)
+            result.layers.objects.forEach(obj => {
+                // Since we don't have real isolated PNGs in this mock, we'll use rect placeholders
+                // In real SAM, we would fetch result.layers.objects[i].url
+                const rect = new fabric.Rect({
+                    left: obj.x,
+                    top: obj.y,
+                    width: obj.w || 100,
+                    height: obj.h || 100,
+                    fill: 'rgba(139, 92, 246, 0.2)',
+                    stroke: '#8B5CF6',
+                    strokeWidth: 2,
+                    rx: 10, ry: 10,
+                    cornerColor: '#8B5CF6',
+                    cornerStyle: 'circle'
+                });
+                
+                const label = new fabric.Text(obj.label, {
+                    fontSize: 12,
+                    fill: '#ffffff',
+                    left: obj.x + 5,
+                    top: obj.y - 20,
+                    fontFamily: 'Inter',
+                    fontWeight: 'bold'
+                });
 
-        function zoomCanvas(factor) {
-            canvas.setZoom(canvas.getZoom() * factor);
-        }
-
-        function downloadResult() {
-            const dataURL = canvas.toDataURL({
-                format: 'png',
-                quality: 1
+                const group = new fabric.Group([rect, label], {
+                    selectable: true
+                });
+                canvas.add(group);
             });
+
+            canvas.renderAll();
+            
+            // Show Success Toast
+            showToast("Layers Extracted! You can now move, scale, or edit text.");
+        }
+
+        function setMode(mode) {
+            activeMode = mode;
+            const btns = document.querySelectorAll('.tool-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            
+            if (mode === 'delete') {
+                const active = canvas.getActiveObjects();
+                canvas.remove(...active);
+                canvas.discardActiveObject().renderAll();
+            }
+        }
+
+        function resetCanvas() {
+            if (canvas) canvas.clear();
+            document.getElementById('drop-zone').classList.remove('hidden');
+            document.getElementById('canvas-wrapper').classList.add('hidden');
+            document.getElementById('magic-extract-btn').classList.add('hidden');
+            document.getElementById('tool-bar').classList.add('hidden');
+            selectedFile = null;
+        }
+
+        function exportCanvas() {
+            const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
             const link = document.createElement('a');
-            link.download = 'magic-grab-result.png';
+            link.download = 'magic-grab-export.png';
             link.href = dataURL;
             link.click();
         }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-aura-violet text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-2xl animate-bounce';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function updateToolbar(hasSelection) {
+            // Logic to enable/disable tool buttons based on selection
+        }
+
+        async function startDetectionLoop() {
+            if (!isDetectionActive) return;
+            
+            async function loop() {
+                if (!isDetectionActive || currentPage !== 'scan') {
+                    isDetectionActive = false;
+                    return;
+                }
+                
+                // Call the real AI Backend using Groq
+                await captureAndAnalyze();
+                
+                // Wait 1 second before next scan for near-real-time feedback
+                if (isDetectionActive) {
+                    setTimeout(loop, 1000);
+                }
+            }
+            
+            loop();
+        }
+
+        function performScan() {
+            const scanBtn = document.querySelector('button[onclick="performScan()"]');
+            
+            if (!isDetectionActive) {
+                isDetectionActive = true;
+                if (scanBtn) scanBtn.classList.add('animate-pulse', 'ring-4', 'ring-white/50');
+                showToast('AI Scanning', 'Live Vision is now active.');
+                startDetectionLoop();
+            } else {
+                isDetectionActive = false;
+                if (scanBtn) scanBtn.classList.remove('animate-pulse', 'ring-4', 'ring-white/50');
+                showToast('Scanning Paused', 'Live Vision is stopped.');
+                // The loop will stop automatically because isDetectionActive is false
+            }
+        }
+
+        function toggleFlash() {
+            if (!videoStream) return;
+
+            const track = videoStream.getVideoTracks()[0];
+            if (track.getCapabilities && track.getCapabilities().torch) {
+                flashOn = !flashOn;
+                track.applyConstraints({
+                    advanced: [{ torch: flashOn }]
+                });
+
+                const flashBtn = document.getElementById('flash-btn');
+                flashBtn.querySelector('svg').classList.toggle('text-aura-orange', flashOn);
+
+                showToast(flashOn ? 'Flash On' : 'Flash Off', 'Torch toggled');
+            } else {
+                showToast('Not Supported', 'Flash not available on this device');
+            }
+        }
+
+        function saveScan() {
+            if (currentDetections.length > 0) {
+                const detection = currentDetections[0];
+                const newScan = {
+                    id: Date.now(),
+                    label: detection.class,
+                    confidence: detection.score,
+                    timestamp: new Date(),
+                    category: getCategory(detection.class),
+                    saved: true
+                };
+
+                mockScanData.unshift(newScan);
+                showToast('Saved', `${detection.class} added to history`);
+                hideInfoCard();
+            }
+        }
+
+        function getCategory(label) {
+            const people = ['person'];
+            const animals = ['dog', 'cat', 'bird', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'];
+
+            if (people.includes(label.toLowerCase())) return 'people';
+            if (animals.includes(label.toLowerCase())) return 'animals';
+            return 'objects';
+        }
+
+        // =====================
+        // Dashboard Functions
+        // =====================
+        function renderDashboard() {
+            const masonryGrid = document.getElementById('masonry-grid');
+            const savedGrid = document.getElementById('saved-grid');
+
+            // Render recent scans
+            masonryGrid.innerHTML = mockScanData.map(scan => createScanCard(scan)).join('');
+
+            // Render saved items
+            const savedItems = mockScanData.filter(s => s.saved);
+            savedGrid.innerHTML = savedItems.map(scan => createSavedCard(scan)).join('');
+
+            // Update stats
+            document.getElementById('total-scans').textContent = mockScanData.length;
+        }
+
+        function createScanCard(scan) {
+            const timeAgo = getTimeAgo(scan.timestamp);
+
+            return `
+                <div class="glass-panel rounded-[2rem] overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer group border border-white/60">
+                    <div class="relative aspect-[4/3] overflow-hidden">
+                        <img src="${scan.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop'}" 
+                             alt="${scan.label}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-aura-violet shadow-sm">
+                                ${scan.category}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-display font-bold text-lg text-slate-deep group-hover:text-aura-violet transition-colors">${scan.label}</h3>
+                            <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-aura-violet/10 group-hover:text-aura-violet transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 text-[10px] font-bold text-green-600">
+                                <div class="w-1 h-1 rounded-full bg-green-600"></div>
+                                ${Math.round(scan.confidence * 100)}% Match
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-medium">${timeAgo}</span>
+                        </div>
+                        <button class="w-full py-3 rounded-xl border border-slate-100 text-slate-deep text-xs font-bold hover:bg-aura-violet hover:text-white hover:border-aura-violet transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createSavedCard(scan) {
+            return `
+                <div class="glass-panel rounded-3xl overflow-hidden hover:shadow-xl transition-all cursor-pointer group border border-white/40">
+                    <div class="relative aspect-square overflow-hidden">
+                        <img src="${scan.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=200&fit=crop'}" 
+                             alt="${scan.label}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-slate-deep text-sm mb-1">${scan.label}</h4>
+                        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">${scan.category}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear your entire scan history?')) {
+                mockScanData = [];
+                renderDashboard();
+                showToast('History Cleared', 'All scan data has been removed locally.');
+            }
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            return `${Math.floor(seconds / 86400)}d ago`;
+        }
+
+        // =====================
+        // Filter Tabs
+        // =====================
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update active state
+                document.querySelectorAll('.filter-tab').forEach(t => {
+                    t.classList.remove('bg-aura-violet', 'text-white', 'shadow-lg', 'shadow-aura-violet/20');
+                    t.classList.add('bg-white', 'text-slate-soft', 'border-slate-100');
+                });
+                tab.classList.add('bg-aura-violet', 'text-white', 'shadow-lg', 'shadow-aura-violet/20');
+                tab.classList.remove('bg-white', 'text-slate-soft', 'border-slate-100');
+
+                // Filter items
+                const filter = tab.dataset.filter;
+                const filteredData = filter === 'all'
+                    ? mockScanData
+                    : filter === 'saved'
+                        ? mockScanData.filter(s => s.saved)
+                        : mockScanData.filter(s => s.category === filter);
+
+                document.getElementById('masonry-grid').innerHTML = filteredData.map(scan => createScanCard(scan)).join('');
+            });
+        });
+
+        // =====================
+        // Toast Notification
+        // =====================
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            toast.classList.remove('translate-x-full', 'opacity-0');
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
+        }
+
+        // =====================
+        // Initialize
+        // =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial page state
+            const landingPage = document.getElementById('page-landing');
+            landingPage.classList.add('page-enter-active');
+            landingPage.classList.remove('page-enter');
+
+            updateNavigation();
+        });
     </script>
 </body>
+
 </html>
