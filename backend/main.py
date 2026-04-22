@@ -124,18 +124,18 @@ async def analyze_image(request: ScanRequest):
             image_data = image_data.split("base64,")[1]
         
         try:
-            print(f"DEBUG: Starting Life-Hack Analysis...")
+            print(f"DEBUG: Starting Advanced Vision Analysis...")
             prompt = """
-            You are the 'Aura Life-Hack Lens'. Analyze this image and find the most interesting/prominent object.
-            
-            1. Identify the object.
-            2. Provide a 'Life Hack': A secret, useful, or creative trick/tip for this object that most people don't know.
-            3. Provide a 'Mind-Blowing Fact': A fascinating piece of history or science about this object.
+            Analyze this image with extreme precision and detail.
+            1. Identify the main objects and any actions occurring (e.g., 'Person showing 5 fingers', 'A laptop on a desk').
+            2. If text or documents are visible, summarize the content.
+            3. Provide a 1-3 word highly specific primary label.
+            4. Provide a 2-3 sentence detailed summary of what you see.
             
             Format the response in this EXACT JSON:
             {
-                "label": "Object Name",
-                "summary": "💡 LIFE HACK: [The hack]\\n\\n✨ DID YOU KNOW? [The fact]"
+                "label": "primary label",
+                "summary": "detailed summary of objects and actions"
             }
             """
             
