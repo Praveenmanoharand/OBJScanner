@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 motor
-google-genai
+groq
 python-dotenv
 httpx
 pydantic
+certifi

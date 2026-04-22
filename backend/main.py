@@ -13,7 +13,7 @@ import httpx
 import motor.motor_asyncio
 import uvicorn
 import certifi
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 
 # Fix SSL certificate issues on Windows
@@ -25,13 +25,13 @@ load_dotenv()
 # Configuration
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb+srv://...")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "ar_scanner")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Initialize Gemini Client
-if GEMINI_API_KEY:
-    ai_client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize Groq Client
+if GROQ_API_KEY:
+    groq_client = Groq(api_key=GROQ_API_KEY)
 else:
-    print("WARNING: GEMINI_API_KEY not found in environment variables.")
+    print("WARNING: GROQ_API_KEY not found in environment variables.")
 
 # Initialize MongoDB
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URL)
@@ -113,17 +113,29 @@ async def analyze_image(request: ScanRequest):
             image_data = image_data.split("base64,")[1]
         
         try:
-            # New google-genai SDK uses a slightly different request structure
-            response = ai_client.models.generate_content(
-                model="gemini-1.5-flash",
-                contents=[
-                    "Identify the primary object in this image. Return ONLY the specific name of the object in 1-3 words.",
-                    {"mime_type": "image/jpeg", "data": image_data}
-                ]
+            # Use Groq Llama 3.2 Vision model
+            completion = groq_client.chat.completions.create(
+                model="llama-3.2-11b-vision-preview",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Identify the primary object in this image. Return ONLY the specific name of the object in 1-3 words."},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{image_data}",
+                                },
+                            },
+                        ],
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=20,
             )
-            label = response.text.strip()
+            label = completion.choices[0].message.content.strip()
         except Exception as e:
-            print(f"Gemini Error: {e}")
+            print(f"Groq Error: {e}")
             raise HTTPException(status_code=500, detail="AI Analysis failed.")
 
         # 2. Fetch Wikipedia Metadata
