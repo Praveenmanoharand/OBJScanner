@@ -352,8 +352,21 @@
             #page-scan:not(.hidden) { position: fixed !important; inset: 0 !important; z-index: 50 !important; background: #000 !important; display: block !important; }
             #camera-feed { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
             
-            /* Hide Scanner Docks on Mobile */
-            #scanner-dock { display: none !important; }
+            /* Show Scanner Dock on Mobile and Raise it */
+            #scanner-dock { 
+                display: block !important; 
+                bottom: 3rem !important; 
+                z-index: 100 !important;
+                max-width: 80% !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+            #scanner-dock .glass-panel {
+                background: rgba(15, 23, 42, 0.4) !important;
+                backdrop-filter: blur(20px) !important;
+                border: 1px solid rgba(255,255,255,0.1) !important;
+            }
+            #scanner-dock svg { color: white !important; }
             #mobile-dock { display: none !important; }
             
             /* Floating Result Pill (No Scroll) */
@@ -1757,7 +1770,7 @@
             : window.location.origin; // On Vercel, the API is on the same domain
 
         async function captureAndAnalyze() {
-            if (currentPage !== 'scan' || !videoStream) return;
+            if (currentPage !== 'scan' || !videoStream || !isDetectionActive) return;
             
             const video = document.getElementById('camera-feed');
             const canvas = document.createElement('canvas');
@@ -1775,12 +1788,17 @@
                     body: JSON.stringify({ image: base64Image })
                 });
 
+                if (!response.ok) {
+                    console.warn("AI Analysis skipped: Backend error or missing API Key.");
+                    return;
+                }
+
                 const result = await response.json();
                 if (result.success) {
                     showObjectInfo(result.data.label, 0.99, result.data.summary);
                 }
             } catch (err) {
-                console.error("API Error:", err);
+                console.error("Scanning Error:", err);
             }
         }
 
